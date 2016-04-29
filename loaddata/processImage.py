@@ -10,8 +10,9 @@ import numpy
 import matplotlib.pyplot as plt
 import math
 from PIL import Image
-import csv
-import defaults
+
+import utils.defaults as defaults
+
 FACE_POINTS = list(range(17, 68))
 MOUTH_POINTS = list(range(48, 61))
 RIGHT_BROW_POINTS = list(range(17, 22))
@@ -20,6 +21,9 @@ RIGHT_EYE_POINTS = list(range(36, 42))
 LEFT_EYE_POINTS = list(range(42, 48))
 NOSE_POINTS = list(range(27, 35))
 JAW_POINTS = list(range(0, 17))
+
+detector = dlib.get_frontal_face_detector()
+predictor = dlib.shape_predictor(defaults.model_shape)##This arg is the shape predictor path         
 
 def plot_data(data):
     plt.plot(data)
@@ -37,11 +41,11 @@ def getCamFrame(color,camera):
 
 def get_landmarks(im):
     rects = detector(im, 1)
-    
+    #If no obtained landmark
     if len(rects) > 1 or len(rects) == 0:
-        return None
+        return -1, False
 
-    return numpy.matrix([[p.x, p.y] for p in predictor(im, rects[0]).parts()])
+    return numpy.matrix([[p.x, p.y] for p in predictor(im, rects[0]).parts()]), True
 
 def get_significant_pointsFirst(landmark):
     significant_points = []        
@@ -175,92 +179,6 @@ def annotate_landmarks(im, landmarks):
                     color=(255, 0, 255))
         cv2.circle(im, pos, 3, color=(0, 255, 255))
     return im
-
-def loadTrainingData():
-    """
-    load training data
-    """
-    # create a list for filenames of happy pictures
-    happyfiles = []
-    with open(defaults.happy_csv, 'rb') as csvfile:
-        for rec in csv.reader(csvfile, delimiter='	'):
-            happyfiles += rec
-
-    # create a list for filenames of neutral pictures
-    neutralfiles = []
-    with open(defaults.neutral_csv, 'rb') as csvfile:
-        for rec in csv.reader(csvfile, delimiter='	'):
-            neutralfiles += rec
-
-    # create a list for filenames of disgust pictures
-    disgustfiles = []
-    with open(defaults.disgust_csv, 'rb') as csvfile:
-        for rec in csv.reader(csvfile, delimiter='	'):
-            disgustfiles += rec
-    
-    # create a list for filenames of disgust pictures
-    fearfiles = []
-    with open(defaults.fear_csv, 'rb') as csvfile:
-        for rec in csv.reader(csvfile, delimiter='	'):
-            fearfiles += rec
-    
-    # create a list for filenames of disgust pictures
-    surprisedfiles = []
-    with open(defaults.surprised_csv, 'rb') as csvfile:
-        for rec in csv.reader(csvfile, delimiter='	'):
-            surprisedfiles += rec
-            
-    # create a list for filenames of disgust pictures
-    sadfiles = []
-    with open(defaults.sad_csv, 'rb') as csvfile:
-        for rec in csv.reader(csvfile, delimiter='	'):
-            sadfiles += rec
-    
-
-    # N x dim matrix to store the vectorized data (aka feature space)       
-    phi = numpy.zeros((len(happyfiles) + len(neutralfiles) + len(disgustfiles)+len(fearfiles) + len(surprisedfiles) + len(sadfiles), defaults.dim),numpy.float32)
-
-    # 1 x N vector to store binary labels of the data: 1 for smile and 0 for neutral
-    labels = []
-
-    # load happy data
-    for idx, filename in enumerate(happyfiles):
-        phi[idx] = process_image(defaults.happy_imgs + filename)
-        labels.append(0)
-    print "loaded happy"
-    
-    # load neutral data    
-    offset = idx + 1
-    for idx, filename in enumerate(neutralfiles):
-        phi[idx + offset] = process_image(defaults.neutral_imgs + filename)
-        labels.append(1)
-    print "loaded neutral"
-
-    # load disgust data
-    offset = offset+idx + 1
-    for idx, filename in enumerate(disgustfiles):
-        phi[idx + offset] = process_image(defaults.disgust_imgs + filename)
-        labels.append(2)
-    
-    # load fear data
-    offset = offset+idx + 1
-    for idx, filename in enumerate(fearfiles):
-        phi[idx + offset] = process_image(defaults.fear_imgs + filename)
-        labels.append(3)
-        
-    # load surprised data
-    offset = offset+idx + 1
-    for idx, filename in enumerate(surprisedfiles):
-        phi[idx + offset] = process_image(defaults.surprised_imgs + filename)
-        labels.append(4)
-        
-    # load sad data
-    offset = offset+idx + 1
-    for idx, filename in enumerate(sadfiles):
-        phi[idx + offset] = process_image(defaults.sad_imgs + filename)
-        labels.append(5)
-
-    return phi , numpy.asarray(labels)
     
 def process_image(im_path):
     img = io.imread(im_path)
@@ -288,22 +206,6 @@ def process_image(im_path):
     print "File %s where it cannot obtain landmark"%(im_path)
     return None
           
-def main():
-    data, labels = loadTrainingData()
-
-
-detector = dlib.get_frontal_face_detector()
-predictor = dlib.shape_predictor(sys.argv[1])##This arg is the shape predictor path         
-
-
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print(
-            "Give the path to the trained shape predictor model as the first "
-            "Execute this program by running:\n"
-            "    ./trainerSVM.py shape_predictor_68_face_landmarks.dat\n")
-        exit()
-    main()
 
 
 
