@@ -51,4 +51,4 @@ class webModel(object):
             log_dist=numpy.asarray(log_dist, dtype=numpy.float32)
             return int(self.model.predict(log_dist))
         else:
-            return -1
+            return 0
