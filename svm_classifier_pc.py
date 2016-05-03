@@ -57,8 +57,8 @@ if __name__ == '__main__':
         #font = cv2.FONT_HERSHEY_SIMPLEX
         #cv2.putText(b,'OpenCV',(10,500), font, 4,(255,255,255))#,2,cv2.LINE_AA)
         #img = numpy.asrray(b)
-        landmark = get_landmarks(img)
-        if landmark!=None:
+        landmark, obtained = get_landmarks(img)
+        if obtained:
             significant_points = get_significant_points(landmark)
             distance_between_points =  get_distance(significant_points)
 

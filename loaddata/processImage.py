@@ -181,11 +181,13 @@ def annotate_landmarks(im, landmarks):
     return im
     
 def process_image(im_path):
-    img = io.imread(im_path)
+    #img = io.imread(im_path)
+    img = cv2.imread(im_path,0)
     #win.clear_overlay()
     #win.set_image(img)
-    landmark = get_landmarks(img)
-    if landmark.any():
+    
+    landmark,obtained = get_landmarks(img)
+    if obtained:
         significant_points = get_significant_points(landmark)
         #print significant_points
             
