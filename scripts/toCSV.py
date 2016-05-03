@@ -4,7 +4,7 @@ from PIL import Image
 import glob
 
 
-img_path = "../data/faces/jaffe/"
+img_path = "../data/faces/union/"
 emotions = ["happy","sad","surprised","neutral","fear","disgust"]
 csv_path = "../data/csv/"
 
