@@ -5,9 +5,7 @@ class StatModel(object):
     def save(self, fn):
         self.model.save(fn)
     def evaluate(self, samples, labels):
-        print "type", type(samples), len(samples)
         resp = self.model.predict(samples)
-        print "type1", type(resp)
         err = (labels != resp).mean()
         print 'error: %.2f %%' % (err*100)
 

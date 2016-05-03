@@ -15,7 +15,6 @@ class SVM(StatModel):
 
     def predict(self, samples):
         #Thanks a lot http://stackoverflow.com/questions/8687885/python-opencv-svm-implementation
-        print "type de samples:",samples, type(samples), type(samples[0])
         #return numpy.float32( [self.model.predict(s) for s in samples]) #last
         #return self.model.predict_all(samples).ravel()
         #return self.model.predict(samples).ravel()
