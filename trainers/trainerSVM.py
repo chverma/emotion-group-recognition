@@ -1,4 +1,5 @@
 from classes.SVM import SVM
+import cv2
 class trainerSVM():
     def __init__(self):
         self.model=None
@@ -16,3 +17,7 @@ class trainerSVM():
         
     def predict(self, samples):
         return self.model.predict(samples)
+        
+    def load(self, inputFile):
+        self.model = cv2.SVM()
+        return self.model.load(inputFile)

@@ -40,10 +40,12 @@ if __name__ == '__main__':
         model.train(samples_train, labels_train)
         model.save(defaults.model_svm_xml)
         ##Does not work
-        #model.evaluate(samples_test, labels_test) 
+        model.evaluate(samples_test, labels_test)
     else:
-        model = cv2.SVM()
+        #model = cv2.SVM()
+        model = trainerSVM()
         model.load(defaults.model_svm_xml)
+        
 
     ##predict from camera
     camera=cv2.VideoCapture(0)

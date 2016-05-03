@@ -105,6 +105,20 @@ class LoadAndShuffleData():
         print("n_features: %d" % defaults.dim)
         print("n_classes: %d" % defaults.CLASS_N)
         
+        #PROVA PCA
+        '''from matplotlib.mlab import PCA
+        #data = array(randint(10,size=(10,3)))
+        results = PCA(data)
+
+        print("Shape of result:", results)
+
+        # plot the results along with the labels
+        fig, ax = plt.subplots()
+        im = ax.scatter(keytrain_T[:, 0], keytrain_T[:, 1], c=y)
+        fig.colorbar(im);
+        plt.show()
+        
+        ##FI PROVA'''
         ## shuffle data
         rand = numpy.random.RandomState(321)
         shuffle = rand.permutation(len(data))
