@@ -62,7 +62,7 @@ if __name__ == '__main__':
     import getopt
     import sys
 
-    models = [KNearest, SVM, ANN, MLP] # RTrees, Boost, NBayes
+    models = [KNearest, SVM, MLP] # RTrees, Boost, NBayes
     models = dict( [(cls.__name__.lower(), cls) for cls in models] )
 
     print 'USAGE: emotionDetection.py [--model <model>] [--param1 <k,C,nh value>] [--param2 <gamma value>] [--imgFiles] [--loadMod <model fn>] [--saveMod <model fn>] [--camera <on/off>]'
