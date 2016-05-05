@@ -19,6 +19,7 @@ from classes.KNearest import KNearest
 from classes.MLP import MLP
 from classes.RTrees import RTrees
 from classes.Boost import Boost
+from classes.PCA import PCA
 # loaddata
 from loaddata.LoadAndShuffleData import LoadAndShuffleData as loadData
 from loaddata.processImage import getCamFrame
@@ -71,7 +72,7 @@ if __name__ == '__main__':
     print 'Models: ', ', '.join(models)
     print
     
-    args, dummy = getopt.getopt(sys.argv[1:], '', ['model=', 'imgFiles=', 'param1=', 'param2=', 'processImages=','load=', 'save=', 'camera='])
+    args, dummy = getopt.getopt(sys.argv[1:], '', ['model=', 'imgFiles=', 'param1=', 'param2=','load=', 'imgFiles=','load=','save=', 'camera='])
     args = dict(args)
     args.setdefault('--camera', 'on')
     args.setdefault('--model', 'svm')
@@ -106,9 +107,12 @@ if __name__ == '__main__':
         model.load(fn)
     else:
         print 'training %s ...' % Model.__name__
-        samples = numpy.vstack((samples_train, samples_test))
-        labels = numpy.concatenate((labels_train, labels_test), axis=0)
-        model.train(samples, labels)
+        #samples = numpy.vstack((samples_train, samples_test))
+        #labels = numpy.concatenate((labels_train, labels_test), axis=0)
+
+        #pca = PCA(samples_train)
+        print "samples_train",type(samples_train)
+        model.train(samples_train, labels_train)
 
     print 'testing...'
     print 'predicting train'
