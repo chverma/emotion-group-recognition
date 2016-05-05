@@ -26,11 +26,6 @@ class MLP(StatModel):
 
     def predict(self, samples):
         ret, resp = self.model.predict(samples)
-        print "predictRESULT"
-        print resp[0]
-        print resp[1]
-        print resp[3]
-        print "ARGMAX",resp.argmax(-1)[0:20]
         return resp.argmax(-1)
     def evaluate(self, samples, labels):
         print
