@@ -3,12 +3,11 @@ import utils.defaults as defaults
 import cv2
 import numpy
 class SVM(StatModel):
-    def __init__(self, C = 1, gamma = 0.5): #Gastava C=2.67, gamma=5.383
-        print "C",C,"gamma", gamma
+    def __init__(self, C, gamma): #Gastava C=2.67, gamma=5.383
         if C == None:
-            C=1
+            C=2.67
         if gamma == None:
-            gamma = 0.5
+            gamma = 5.383
             
         self.params = dict( kernel_type = cv2.SVM_RBF,
                             svm_type = cv2.SVM_C_SVC,

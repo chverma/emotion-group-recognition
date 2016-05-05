@@ -17,6 +17,8 @@ import dlib
 from classes.SVM import SVM
 from classes.KNearest import KNearest
 from classes.MLP import MLP
+from classes.RTrees import RTrees
+from classes.Boost import Boost
 # loaddata
 from loaddata.LoadAndShuffleData import LoadAndShuffleData as loadData
 from loaddata.processImage import getCamFrame
@@ -62,7 +64,7 @@ if __name__ == '__main__':
     import getopt
     import sys
 
-    models = [KNearest, SVM, MLP] # RTrees, Boost, NBayes
+    models = [KNearest, SVM, MLP, Boost, RTrees] # RTrees, Boost, NBayes
     models = dict( [(cls.__name__.lower(), cls) for cls in models] )
 
     print 'USAGE: emotionDetection.py [--model <model>] [--param1 <k,C,nh value>] [--param2 <gamma value>] [--imgFiles] [--loadMod <model fn>] [--saveMod <model fn>] [--camera <on/off>]'

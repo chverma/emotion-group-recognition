@@ -3,7 +3,7 @@ import utils.defaults as defaults
 import cv2
 from classes.StatModel import StatModel
 class MLP(StatModel):
-    def __init__(self, nh=100, dummy=0):
+    def __init__(self, nh, dummy):
         self.model = cv2.ANN_MLP()
         if nh==None:
             self.nhidden=100

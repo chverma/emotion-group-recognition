@@ -3,7 +3,7 @@ import numpy
 import utils.defaults as defaults
 import cv2
 class KNearest(StatModel):
-    def __init__(self, k = 1, dummy=0):
+    def __init__(self, k, dummy):
         if k==None:
             self.k = 1
         else:

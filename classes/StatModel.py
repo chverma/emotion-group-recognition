@@ -8,9 +8,9 @@ class StatModel(object):
     
     def unroll_samples(self, samples):
         sample_n, var_n = samples.shape
-        new_samples = numpy.zeros((sample_n * defaults.CLASS_N, var_n+1), np.float32)
+        new_samples = numpy.zeros((sample_n * defaults.CLASS_N, var_n+1), numpy.float32)
         new_samples[:,:-1] = numpy.repeat(samples, defaults.CLASS_N, axis=0)
-        new_samples[:,-1] = numpy.tile(np.arange(defaults.CLASS_N), sample_n)
+        new_samples[:,-1] = numpy.tile(numpy.arange(defaults.CLASS_N), sample_n)
         return new_samples
     
     def unroll_responses(self, responses):
