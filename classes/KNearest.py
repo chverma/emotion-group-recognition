@@ -19,7 +19,6 @@ class KNearest(StatModel):
         return results.ravel()
         
     def evaluate(self, samples, labels):
-        print "type model: ", type(self.model)
         #resp =  numpy.float32( [self.model.predict(s) for s in samples])
         resp = self.predict(samples)
         err = (labels != resp).mean()

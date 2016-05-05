@@ -8,7 +8,7 @@ class MLP(StatModel):
         if nh==None:
             self.nhidden=100
         else:
-            self.nhidden=nh
+            self.nhidden=int(nh)
 
     def train(self, samples, responses):
         sample_n, var_n = samples.shape

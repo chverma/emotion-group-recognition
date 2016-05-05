@@ -67,11 +67,11 @@ if __name__ == '__main__':
     models = [KNearest, SVM, MLP, Boost, RTrees] # RTrees, Boost, NBayes
     models = dict( [(cls.__name__.lower(), cls) for cls in models] )
 
-    print 'USAGE: emotionDetection.py [--model <model>] [--param1 <k,C,nh value>] [--param2 <gamma value>] [--imgFiles] [--loadMod <model fn>] [--saveMod <model fn>] [--camera <on/off>]'
+    print 'USAGE: emotionDetection.py [--model <model>] [--param1 <k,C,nh value>] [--param2 <gamma value>] [--imgFiles] [--load <model fn>] [--save <model fn>] [--camera <on/off>]'
     print 'Models: ', ', '.join(models)
     print
     
-    args, dummy = getopt.getopt(sys.argv[1:], '', ['model=', 'imgFiles=', 'param1=', 'param2=', 'processImages=','loadMod=', 'saveMod=', 'camera='])
+    args, dummy = getopt.getopt(sys.argv[1:], '', ['model=', 'imgFiles=', 'param1=', 'param2=', 'processImages=','load=', 'save=', 'camera='])
     args = dict(args)
     args.setdefault('--camera', 'on')
     args.setdefault('--model', 'svm')
@@ -108,9 +108,6 @@ if __name__ == '__main__':
         print 'training %s ...' % Model.__name__
         samples = numpy.vstack((samples_train, samples_test))
         labels = numpy.concatenate((labels_train, labels_test), axis=0)
-   
-        print 'len(labels)',len(labels)
-        
         model.train(samples, labels)
 
     print 'testing...'

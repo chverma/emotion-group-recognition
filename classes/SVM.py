@@ -25,7 +25,6 @@ class SVM(StatModel):
         #return self.model.predict(samples).ravel()
         return self.model.predict(samples);
     def evaluate(self, samples, labels):
-        print "type model: ", type(self.model)
         resp =  numpy.float32( [self.model.predict(s) for s in samples])
         #resp = self.model.predict(samples)
         err = (labels != resp).mean()
