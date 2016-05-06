@@ -3,8 +3,6 @@
 import sys
 import os
 import dlib
-import glob
-from skimage import io
 import cv2
 import numpy
 import matplotlib.pyplot as plt
@@ -12,7 +10,7 @@ import math
 from PIL import Image
 
 import utils.defaults as defaults
-
+import datetime
 FACE_POINTS = list(range(17, 68))
 MOUTH_POINTS = list(range(48, 61))
 RIGHT_BROW_POINTS = list(range(17, 22))
@@ -40,7 +38,10 @@ def getCamFrame(color,camera):
     return frame
 
 def get_landmarks(im):
+    t1 = datetime.datetime.now()
     rects = detector(im, 1)
+    t2 = datetime.datetime.now()
+    print "Time detector:", (t2-t1)
     #If no obtained landmark
     if len(rects) > 1 or len(rects) == 0:
         return -1, False
