@@ -206,7 +206,7 @@ def process_image(im_path):
             
         return log_dist
         
-    print "File %s where it cannot obtain landmark"%(im_path)
+    print "Warning: It cannot obtain landmark on %s"%(im_path)
     return None
           
 

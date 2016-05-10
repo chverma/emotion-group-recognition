@@ -65,7 +65,9 @@ if __name__ == '__main__':
     import getopt
     import sys
 
-    models = [KNearest, SVM, MLP, Boost, RTrees] # RTrees, Boost, NBayes
+    models = [KNearest, SVM, MLP, Boost, RTrees]
+    # Decision Trees, Gradient Boosted Trees,Extremely randomized trees,Expectation Maximization
+    # Dtrees, GBTrees, ERTrees, EM
     models = dict( [(cls.__name__.lower(), cls) for cls in models] )
 
     print 'USAGE: emotionDetection.py [--model <model>] [--param1 <k,C,nh value>] [--param2 <gamma value>] [--imgFiles] [--load <model fn>] [--save <model fn>] [--camera <on/off>]'
@@ -100,7 +102,9 @@ if __name__ == '__main__':
         labels_train = numpy.load('labels_train.npy')
         samples_test = numpy.load('samples_test.npy')
         labels_test = numpy.load('labels_test.npy')
-        
+        print("Total dataset size:")
+        print("n_samples: %d" % len(labels_train))
+        print("n_test: %d" % len(labels_test))
     if '--load' in args:
         fn = args['--load']
         print 'loading model from %s ...' % fn
