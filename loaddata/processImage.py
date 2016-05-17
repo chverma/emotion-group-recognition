@@ -33,6 +33,8 @@ def plot_data(data):
 def getCamFrame(color,camera):
     retval,frame=camera.read()
     if not color:
+        frame=cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    else:
         frame=cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
     #frame=numpy.rot90(frame)
     return frame
