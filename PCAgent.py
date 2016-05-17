@@ -13,8 +13,8 @@ import spade
 import numpy
 from loaddata.processImage import getCamFrame
 sys.path.append('..')
-host = "127.0.0.1"
-host = '37.61.152.135'
+#host = "127.0.0.1"
+host = '91.134.135.40'#'37.61.152.135'
 import cv2
 import datetime
 class Sender(spade.Agent.Agent):
@@ -92,7 +92,7 @@ class Sender(spade.Agent.Agent):
 
         self.addBehaviour(self.RecvMsgBehav(),t)
         # Add the sender behaviour
-        b = self.SendMsgBehav(1)
+        b = self.SendMsgBehav(5)
         self.addBehaviour(b, None)
 
     

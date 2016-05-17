@@ -11,17 +11,28 @@ import sys
 import time
 import spade
 import numpy
+from vision_imageNAO import getNAO_image_PIL as getNAO_image_PIL
 sys.path.append('..')
-host = "127.0.0.1"
+#host = "127.0.0.1"
+#host = '37.61.152.135'
+host = '91.134.135.40'
+IP = "127.0.0.1"
+PORT = 9559
 import cv2
-class Sender(spade.Agent.Agent):
+import datetime
+from naoqi import ALProxy
+tts = ALProxy("ALTextToSpeech", IP, PORT)
 
+class Sender(spade.Agent.Agent):
     class SendMsgBehav(spade.Behaviour.PeriodicBehaviour):
         def onStart(self):
             print "Starting behaviour . . ."
             self.counter = 0
+            self.resp=0
         def _onTick(self):
-            print "Sending...", self.counter
+            t0=datetime.datetime.now()
+            print 't0',t0
+            #print "Sending...", self.counter
             self.counter = self.counter + 1
             """
             This behaviour sends a message to this same agent to trigger an EventBehaviour
@@ -30,21 +41,16 @@ class Sender(spade.Agent.Agent):
             msg.setPerformative("inform")
             msg.setOntology("detect-image")
             msg.addReceiver(spade.AID.aid("detector@"+host,["xmpp://detector@"+host]))
+            im = getNAO_image_PIL(IP,PORT)
 
-            img = cv2.imread("agents/46.png",0)
-
-            numpy.savetxt('test.out', img, fmt='%i')
-            img_file = open("test.out",'r')
-            raw = ""
-            for i in xrange(480):
-                line=img_file.readline()
-                raw = raw+','+line
-
-            msg.setContent(raw)
- 
+            msg.setContent(im)
+            t2=datetime.datetime.now()
             self.myAgent.send(msg)
-            print "Sended!"
-           
+            t3=datetime.datetime.now()
+            print "timeSend: ",(t3-t2)
+            t1=datetime.datetime.now()
+            print "Sended!",(t1-t0)
+
     class RecvMsgBehav(spade.Behaviour.Behaviour):
         """
         This EventBehaviour gets launched when a message that matches its template arrives at the agent
@@ -54,11 +60,14 @@ class Sender(spade.Agent.Agent):
             self.counter = 0
             
         def _process(self):
-            print "WAITING RESPONSE"
+            #print "WAITING RESPONSE"
             self.msg = self._receive(True)
-            print "Just passinggg"
+
             if self.msg:
-                print "Response obtained"
+                t0=datetime.datetime.now()
+                print 't1',t0
+                #print "Response obtained"
+                tts.say(self.msg.getContent())
                 print "->",self.msg.getContent()
             else:
                 print "No response"
@@ -73,7 +82,7 @@ class Sender(spade.Agent.Agent):
 
         self.addBehaviour(self.RecvMsgBehav(),t)
         # Add the sender behaviour
-        b = self.SendMsgBehav(30)
+        b = self.SendMsgBehav(1)
         self.addBehaviour(b, None)
 
     
