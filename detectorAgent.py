@@ -7,17 +7,22 @@ to trigger the execution of a behaviour (EventBehaviour)
 '''
 
 import os
+import io
 import sys
 import time
-
+import base64
 import spade
 import datetime
-host = "127.0.0.1"
+host = "91.134.135.40"
 import numpy
 import importlib
 import webModel
 import cv2
 import time
+import binascii
+import base64
+import Image
+import cv
 wM = webModel.webModel()
 cont=0
 import utils.defaults as defaults
@@ -28,19 +33,21 @@ class Detector(spade.Agent.Agent):
             print "Starting behaviour . . ."
             self.counter = 0
         def _process(self):
-            #print "waiting messages..."
+            print "waiting messages..."
             self.msg = None
             try:
                 self.msg = self._receive(block=True)
+                print "--------RECEIVED", self.counter
             except Exception: 
                  print "just pException"
             
             if self.msg:
                 t0=datetime.datetime.now()
                 #print "Received message..."
-                img = self.msg.getContent()
+                imgAscii = self.msg.getContent()
                 
-                new_file = open('new_file.out','w')
+		'''
+                new_file = open('new_file'+str(t0)+'.out','w')
   
                 img = img.split(',')
  
@@ -49,27 +56,31 @@ class Detector(spade.Agent.Agent):
                     new_file.write(i)
                 new_file.close()
 
-                img=numpy.loadtxt('new_file.out')
-                #print "Received message2..."
-                
-                img_fname = "agents/images/buffer"+str(self.counter)+".png"
-                #print "Received message3..."
-                cv2.imwrite(img_fname,img)
-                #print "Received message4..."
+                img=numpy.loadtxt('new_file'+str(t0)+'.out')
+                '''
+
+		imgBin  = base64.b64decode(imgAscii)
+		originalImage = cv.CreateImageHeader((640, 480), cv.IPL_DEPTH_8U, 1)
+		cv.SetData(originalImage, imgBin)
+
+		npArray = numpy.asarray(originalImage[:,:])
+
                 msg = spade.ACLMessage.ACLMessage()
                 msg.setPerformative("inform")
                 msg.setOntology("emotion-detected")
                 msg.addReceiver(spade.AID.aid("nao@"+host,["xmpp://nao@"+host]))
                 #print "Received message5..."
-                
-                
-   
-                resp = defaults.emotions[wM.predictImage(img_fname)]
+                indxEmo = wM.predictFromMatrix(npArray)
+                if indxEmo>-1:
+                    resp = defaults.emotions[indxEmo]
+                else:
+                    resp = 'No lendmark :('
                 #print "Received message6..."
-                msg.setContent(str(resp))
+                msg.setContent(resp)
                 self.myAgent.send(msg)
-                t1=datetime.datetime.now()
+                t1=datetime.datetime.now()	
                 print "Sended: ",resp, "time:", (t1-t0)
+                self.counter=self.counter+1
             else:
                 print "No messages"
             

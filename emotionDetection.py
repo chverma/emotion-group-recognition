@@ -19,7 +19,7 @@ from classes.KNearest import KNearest
 from classes.MLP import MLP
 from classes.RTrees import RTrees
 from classes.Boost import Boost
-from classes.PCA import PCA
+#from classes.PCA import PCA
 # loaddata
 from loaddata.LoadAndShuffleData import LoadAndShuffleData as loadData
 from loaddata.processImage import getCamFrame

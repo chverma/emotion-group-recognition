@@ -25,6 +25,6 @@ surprised_imgs = img_directory+'surprised/'
 sad_imgs = img_directory+'sad/'
 
 ##SAVED MODELS
-model_svm_xml = '/home/chverma/UPV/TFG/pythonDlibLendmark/models/emotions_svm.xml'
+model_svm_xml = 'models/svmDefault.xml'
 model_knearest_xml = '/home/chverma/UPV/TFG/pythonDlibLendmark/models/emotion_KNearest.xml'
-model_shape = '/home/chverma/UPV/TFG/pythonDlibLendmark/models/shape_predictor_68_face_landmarks.dat'
+model_shape = 'models/shape_predictor_68_face_landmarks.dat'

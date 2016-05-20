@@ -38,13 +38,17 @@ class webModel(object):
             print "lendmark obtained from  matrix"
             significant_points = get_significant_points(landmark)
             distance_between_points =  get_distance(significant_points)
-
+            print "result1"
             log_dist = map(lambda x: math.log10(x), distance_between_points)
+            print "result1.1"
             log_dist=numpy.asarray(log_dist, dtype=numpy.float32)
+            print "result2"
             #print distance_between_points
-            return int(self.model.predict(numpy.float32([log_dist])))
+            result = int(self.model.predict(numpy.float32([log_dist])))
+            print "result3", result
+            return result
         else:
-            return 0
+            return -1
             
     def predictImage(self,imgfile):
         img = cv2.imread(imgfile,0)
