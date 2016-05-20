@@ -11,6 +11,7 @@ import io
 import sys
 import time
 import base64
+
 import spade
 import datetime
 host = "91.134.135.40"
@@ -19,9 +20,8 @@ import importlib
 import webModel
 import cv2
 import time
-import binascii
-import base64
 import Image
+
 import cv
 wM = webModel.webModel()
 cont=0
@@ -43,32 +43,18 @@ class Detector(spade.Agent.Agent):
             
             if self.msg:
                 t0=datetime.datetime.now()
-                #print "Received message..."
-                imgAscii = self.msg.getContent()
                 
-		'''
-                new_file = open('new_file'+str(t0)+'.out','w')
-  
-                img = img.split(',')
- 
-                for i in img:
-     
-                    new_file.write(i)
-                new_file.close()
-
-                img=numpy.loadtxt('new_file'+str(t0)+'.out')
-                '''
-
-		imgBin  = base64.b64decode(imgAscii)
-		originalImage = cv.CreateImageHeader((640, 480), cv.IPL_DEPTH_8U, 1)
-		cv.SetData(originalImage, imgBin)
-
-		npArray = numpy.asarray(originalImage[:,:])
+                #print "Received message..."
+                imgBin  = base64.b64decode(self.msg.getContent())
+                originalImage = cv.CreateImageHeader((640, 480), cv.IPL_DEPTH_8U, 1)
+                cv.SetData(originalImage, imgBin)
+                npArray = numpy.asarray(originalImage[:,:])
 
                 msg = spade.ACLMessage.ACLMessage()
                 msg.setPerformative("inform")
                 msg.setOntology("emotion-detected")
                 msg.addReceiver(spade.AID.aid("nao@"+host,["xmpp://nao@"+host]))
+                
                 #print "Received message5..."
                 indxEmo = wM.predictFromMatrix(npArray)
                 if indxEmo>-1:
