@@ -53,17 +53,15 @@ def predictFromCamera(model):
             log_dist = map(lambda x: math.log10(x), distance_between_points)
             log_dist=numpy.asarray(log_dist, dtype=numpy.float32)
             
-            win.set_image(img)
+            #win.set_image(img)
             ##Print Points
-            #win.set_image(annotate_landmarks(img, numpy.matrix(significant_points)))
-
-            resp = int(model.predict(numpy.float32([log_dist]))) # This predict does not work with Knearest
+            win.set_image(annotate_landmarks(img, numpy.matrix(landmark)))
+            #dlib.hit_enter_to_continue()
+            resp = int(model.predict(numpy.float32([distance_between_points]))) # This predict does not work with Knearest
             
             #print "response",defaults.emotions[resp]           
-
-if __name__ == '__main__':
+def main(parameters):
     import getopt
-    import sys
 
     models = [KNearest, SVM, MLP, Boost, RTrees]
     # Decision Trees, Gradient Boosted Trees,Extremely randomized trees,Expectation Maximization
@@ -74,7 +72,7 @@ if __name__ == '__main__':
     print 'Models: ', ', '.join(models)
     print
     
-    args, dummy = getopt.getopt(sys.argv[1:], '', ['model=', 'imgFiles=', 'param1=', 'param2=','load=', 'imgFiles=','load=','save=', 'camera='])
+    args, dummy = getopt.getopt(parameters, '', ['model=', 'imgFiles=', 'param1=', 'param2=','load=', 'imgFiles=','load=','save=', 'camera='])
     args = dict(args)
     args.setdefault('--camera', 'on')
     args.setdefault('--model', 'svm')
@@ -91,17 +89,15 @@ if __name__ == '__main__':
     labels_test = None
     if '--imgFiles' in args:
         print 'loading images from %s ...' % defaults.img_directory
-        samples_train, labels_train, samples_test, labels_test = loadData().getData()
+        samples_train, labels_train, samples_test, labels_test = loadData().shuffleData(loadData().getData())
         numpy.save('samples_train.npy', samples_train)
         numpy.save('labels_train.npy', labels_train)
         numpy.save('samples_test.npy', samples_test)
         numpy.save('labels_test.npy', labels_test)
     else:
         print 'loading images from data file: npy'
-        samples_train = numpy.load('samples_train.npy')
-        labels_train = numpy.load('labels_train.npy')
-        samples_test = numpy.load('samples_test.npy')
-        labels_test = numpy.load('labels_test.npy')
+        
+        samples_train, labels_train, samples_test, labels_test  = loadData().shuffleData(  numpy.load(defaults.file_dataset), numpy.load(defaults.file_labels))
         print("Total dataset size:")
         print("n_samples: %d" % len(labels_train))
         print("n_test: %d" % len(labels_test))
@@ -115,7 +111,6 @@ if __name__ == '__main__':
         #labels = numpy.concatenate((labels_train, labels_test), axis=0)
 
         #pca = PCA(samples_train)
-        print "samples_train",type(samples_train)
         model.train(samples_train, labels_train)
 
     print 'testing...'
@@ -133,10 +128,17 @@ if __name__ == '__main__':
         fn = args['--save']
         print 'saving model to %s ...' % fn
         model.save(fn)
-        
+
     if '--camera' in args:
         fn = args['--camera']
         if fn=='on': 
             predictFromCamera(model)
+            
+    return test_rate*100
+            
+if __name__ == '__main__':
+    import sys
+    main(sys.argv[1:])
+    
         
     

@@ -126,44 +126,37 @@ class LoadAndShuffleData():
 
         return phi , numpy.asarray(labels)
         
+    def shuffleData(self, data, labels):
+        ## shuffle data
+        nsamples = len(data)
+        #rand = numpy.random.RandomState(321)
+        shuffle = numpy.random.permutation(nsamples)
+        data, labels = data[shuffle], labels[shuffle]
+        
+        train_n = int(0.9*nsamples)
+
+        samples_train, samples_test = numpy.split(data, [train_n])
+        labels_train, labels_test = numpy.split(labels, [train_n])
+        
+        return samples_train, labels_train, samples_test, labels_test
+        
     def getData(self):
         print "Obtaining data..."
         t1 = datetime.datetime.now()
         data, labels = self.loadTrainingData()
         nsamples = len(data)
-        
+        numpy.save(defaults.file_dataset, data)
+        numpy.save(defaults.file_labels, labels)
         t2 = datetime.datetime.now()
         print "Total time loading:", (t2-t1)
     
         print("Total dataset size:")
         print("n_samples: %d" % nsamples)
-        print("n_features: %d" % defaults.dim)
+        print("n_features: %d" % len(data[0]))
         print("n_classes: %d" % defaults.CLASS_N)
         
-        #PROVA PCA
-        '''from matplotlib.mlab import PCA
-        #data = array(randint(10,size=(10,3)))
-        results = PCA(data)
 
-        print("Shape of result:", results)
-
-        # plot the results along with the labels
-        fig, ax = plt.subplots()
-        im = ax.scatter(keytrain_T[:, 0], keytrain_T[:, 1], c=y)
-        fig.colorbar(im);
-        plt.show()
         
-        ##FI PROVA'''
-        ## shuffle data
-        rand = numpy.random.RandomState(321)
-        shuffle = rand.permutation(nsamples)
-        data, labels = data[shuffle], labels[shuffle]
-
-        print "higth:%d; width:%d"%(nsamples,len(data[0]))
-        train_n = int(0.9*nsamples)
-        print "training_n:%d; total_n:%d"%(train_n,nsamples)
-         
-        samples_train, samples_test = numpy.split(data, [train_n])
-        labels_train, labels_test = numpy.split(labels, [train_n])
         
-        return samples_train, labels_train, samples_test, labels_test
+
+        return data, labels

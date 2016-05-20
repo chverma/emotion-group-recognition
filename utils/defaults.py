@@ -1,5 +1,5 @@
 ##########DEFAULTS
-dim = 12 ## bacause I use 12 distances
+dim = 51 ## bacause I use 12 distances
 
 
 emotions=["happy","neutral","disgust","fear","surprised","sad"]
@@ -28,3 +28,6 @@ sad_imgs = img_directory+'sad/'
 model_svm_xml = 'models/svmDefault2.xml'
 model_knearest_xml = 'models/knearestDefault.xml'
 model_shape = 'models/shape_predictor_68_face_landmarks.dat'
+
+file_dataset = 'dataset/dataset.npy' 
+file_labels =  'dataset/labels.npy'

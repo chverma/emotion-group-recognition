@@ -76,7 +76,7 @@ def get_significant_pointsFirst(landmark):
     
     return significant_points
 
-def get_significant_points(landmark):
+def get_significant_points12Features(landmark):
     significant_points = []        
              
     #Center EyeBrown Left: P1
@@ -123,10 +123,17 @@ def get_significant_points(landmark):
     
     return significant_points
 
+def get_significant_points(landmark):
+    significant_points = []        
+             
+    for i in xrange(16,68):
+        significant_points.append( [landmark[i, 0], landmark[i, 1]] )
+
+    return significant_points
 #####################################
 ## This function returns the distance between certain points. This points and 
 ## and distances corresponds of the second draw
-def get_distance(significant_points):
+def get_distance12Features(significant_points):
     distance = []        
     def calc_dist(a,b):
         return ( ((b[0]-a[0])**2) + ((b[1]-a[1])**2) )**(0.5)
@@ -172,6 +179,15 @@ def get_distance(significant_points):
     
     return distance
     
+def get_distance(significant_points):
+    distance = []        
+    def calc_dist(a,b):
+        return ( ((b[0]-a[0])**2) + ((b[1]-a[1])**2) )**(0.5)
+        
+    for i in xrange(len(significant_points)-1):
+        distance.append( calc_dist(significant_points[i],significant_points[i+1]) )
+    return distance
+
 def annotate_landmarks(im, landmarks):
     im = im.copy()
     for idx, point in enumerate(landmarks):
@@ -197,7 +213,7 @@ def process_image(im_path):
         distance_between_points =  get_distance(significant_points)
         #print distance_between_points
         #plot_data(distance_between_points)
-            
+        return distance_between_points
         #Instead of mapping, the distance must be logarized before
         log_dist = map(lambda x: math.log10(x), distance_between_points)
         #plot_data(log_dist)
