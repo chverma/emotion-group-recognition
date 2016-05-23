@@ -3,17 +3,20 @@ import utils.defaults as defaults
 import cv2
 from classes.StatModel import StatModel
 class MLP(StatModel):
-    def __init__(self, nh, dummy):
+    def __init__(self, nh, nh2):
         self.model = cv2.ANN_MLP()
         if nh==None:
             self.nhidden=100
         else:
             self.nhidden=int(nh)
+	    if nh2==None:
+		nh2=nh
+	    self.nhidden2=int(nh2)
 
     def train(self, samples, responses):
         sample_n, var_n = samples.shape
         new_responses = self.unroll_responses(responses).reshape(-1, defaults.CLASS_N)
-        layer_sizes = np.int32([var_n, self.nhidden, self.nhidden, defaults.CLASS_N])
+        layer_sizes = np.int32([var_n, self.nhidden, self.nhidden2, defaults.CLASS_N])
         print "layer_sizes", layer_sizes
         self.model.create(layer_sizes)
         
