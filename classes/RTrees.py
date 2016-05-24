@@ -10,7 +10,7 @@ class RTrees(StatModel):
         sample_n, var_n = samples.shape
         var_types = np.array([cv2.CV_VAR_NUMERICAL] * var_n + [cv2.CV_VAR_CATEGORICAL], np.uint8)
         #CvRTParams(10,10,0,false,15,0,true,4,100,0.01f,CV_TERMCRIT_ITER));
-        params = dict(max_depth=self.maxDepth )
+        params = dict(max_depth=int(self.maxDepth) )
         self.model.train(samples, cv2.CV_ROW_SAMPLE, responses, varType = var_types, params = params)
 
     def predict(self, samples):
