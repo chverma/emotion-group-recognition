@@ -48,10 +48,7 @@ def predictFromCamera(model):
         landmark, obtained = get_landmarks(img)
         if obtained:
             significant_points = get_significant_points(landmark)
-            distance_between_points =  get_distance(significant_points)
-
-            log_dist = map(lambda x: math.log10(x), distance_between_points)
-            log_dist=numpy.asarray(log_dist, dtype=numpy.float32)
+            distance_between_points =  get_distance(significant_points, False)
             
             #win.set_image(img)
             ##Print Points
@@ -89,11 +86,11 @@ def main(parameters):
     labels_test = None
     if '--imgFiles' in args:
         print 'loading images from %s ...' % defaults.img_directory
-        samples_train, labels_train, samples_test, labels_test = loadData().shuffleData(loadData().getData())
-        numpy.save('samples_train.npy', samples_train)
-        numpy.save('labels_train.npy', labels_train)
-        numpy.save('samples_test.npy', samples_test)
-        numpy.save('labels_test.npy', labels_test)
+        samples_train, labels_train, samples_test, labels_test = loadData().shuffleData((loadData().getData()))
+        #numpy.save('samples_train.npy', samples_train)
+        #numpy.save('labels_train.npy', labels_train)
+        #numpy.save('samples_test.npy', samples_test)
+        #numpy.save('labels_test.npy', labels_test)
     else:
         print 'loading images from data file: npy'
         

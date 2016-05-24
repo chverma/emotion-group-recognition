@@ -123,13 +123,16 @@ def get_significant_points12Features(landmark):
     
     return significant_points
 
-def get_significant_points(landmark):
+def get_significant_points51(landmark):
     significant_points = []        
              
     for i in xrange(16,68):
         significant_points.append( [landmark[i, 0], landmark[i, 1]] )
 
     return significant_points
+
+def get_significant_points(landmark):
+    return get_significant_points12Features(landmark)
 #####################################
 ## This function returns the distance between certain points. This points and 
 ## and distances corresponds of the second draw
@@ -179,7 +182,7 @@ def get_distance12Features(significant_points):
     
     return distance
     
-def get_distance(significant_points):
+def get_distance51Features(significant_points):
     distance = []        
     def calc_dist(a,b):
         return ( ((b[0]-a[0])**2) + ((b[1]-a[1])**2) )**(0.5)
@@ -188,6 +191,12 @@ def get_distance(significant_points):
         distance.append( calc_dist(significant_points[i],significant_points[i+1]) )
     return distance
 
+def get_distance(significant_points, log):
+    if not log:
+        return get_distance12Features(significant_points)
+    else:
+        return numpy.asarray(map(lambda x: math.log10(x), get_distance12Features(significant_points)), dtype=numpy.float32)
+        
 def annotate_landmarks(im, landmarks):
     im = im.copy()
     for idx, point in enumerate(landmarks):
@@ -206,23 +215,18 @@ def process_image(im_path):
     #win.set_image(img)
     
     landmark,obtained = get_landmarks(img)
-    if obtained:
-        significant_points = get_significant_points(landmark)
-        #print significant_points
-            
-        distance_between_points =  get_distance(significant_points)
+    if obtained:           
+        distance_between_points =  get_distance(get_significant_points(landmark), False)
         #print distance_between_points
         #plot_data(distance_between_points)
-        return distance_between_points
-        #Instead of mapping, the distance must be logarized before
-        log_dist = map(lambda x: math.log10(x), distance_between_points)
+
         #plot_data(log_dist)
             
         ##Print Points
         #win.set_image(annotate_landmarks(img, numpy.matrix(significant_points)))
         #cv2.imwrite('output.jpg', annotate_landmarks(img, numpy.matrix(significant_points))) 
             
-        return log_dist
+        return distance_between_points
         
     print "Warning: It cannot obtain landmark on %s"%(im_path)
     return None
