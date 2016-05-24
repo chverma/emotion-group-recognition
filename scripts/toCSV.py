@@ -5,6 +5,7 @@ import glob
 
 
 img_path = "../data/faces/union/"
+#img_path = "../data/faces/KDEF_Class/"
 emotions = ["happy","sad","surprised","neutral","fear","disgust"]
 csv_path = "../data/csv/"
 
