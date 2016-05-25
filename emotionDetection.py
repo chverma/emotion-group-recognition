@@ -48,7 +48,7 @@ def predictFromCamera(model):
         landmark, obtained = get_landmarks(img)
         if obtained:
             significant_points = get_significant_points(landmark)
-            distance_between_points =  get_distance(significant_points, False)
+            distance_between_points =  get_distance(significant_points, defaults.use_log)
             
             #win.set_image(img)
             ##Print Points
@@ -57,73 +57,69 @@ def predictFromCamera(model):
             resp = int(model.predict(numpy.float32([distance_between_points]))) # This predict does not work with Knearest
             
             #print "response",defaults.emotions[resp]           
-def main(parameters):
+def main(parameters, samples, labels):
     import getopt
 
     models = [KNearest, SVM, MLP, Boost, RTrees]
     # Decision Trees, Gradient Boosted Trees,Extremely randomized trees,Expectation Maximization
     # Dtrees, GBTrees, ERTrees, EM
     models = dict( [(cls.__name__.lower(), cls) for cls in models] )
-
-    print 'USAGE: emotionDetection.py [--model <model>] [--param1 <k,C,nh value>] [--param2 <gamma value>] [--imgFiles] [--load <model fn>] [--save <model fn>] [--camera <on/off>]'
+    '''
+    print 'USAGE: emotionDetection.py [--model <model>] [--param1 <k,C,nh value>] [--param2 <gamma value>] [--imgFiles] [--load <model fn>] [--save <model fn>] [--camera <on/off> [--eval <y/n>]'
     print 'Models: ', ', '.join(models)
     print
-    
-    args, dummy = getopt.getopt(parameters, '', ['model=', 'imgFiles=', 'param1=', 'param2=','load=', 'imgFiles=','load=','save=', 'camera='])
+    '''
+    args, dummy = getopt.getopt(parameters, '', ['model=', 'imgFiles=', 'param1=', 'param2=','load=', 'imgFiles=','load=','save=', 'camera=', 'eval='])
     args = dict(args)
     args.setdefault('--camera', 'on')
     args.setdefault('--model', 'svm')
     args.setdefault('--param1', None)
     args.setdefault('--param2', None)
+    args.setdefault('--eval', 'y')
 
     Model = models[args['--model']]
     
     model = Model(args['--param1'], args['--param2'])
-
+    if args['--model']=='svm':
+        #http://docs.opencv.org/2.4/modules/ml/doc/support_vector_machines.html#cvsvmparams-cvsvmparams
+        model.set_params(dict( kernel_type = cv2.SVM_RBF,
+                            svm_type = cv2.SVM_NU_SVC,
+                            nu=0.3,
+                            degree = 1
+                            ))
+        #POLY: degree = 1, NU_SVC: nu=0.3
     samples_train=None
     labels_train=None
     samples_test=None
     labels_test = None
     if '--imgFiles' in args:
         print 'loading images from %s ...' % defaults.img_directory
-        samples_train, labels_train, samples_test, labels_test = loadData().shuffleData((loadData().getData()))
-        #numpy.save('samples_train.npy', samples_train)
-        #numpy.save('labels_train.npy', labels_train)
-        #numpy.save('samples_test.npy', samples_test)
-        #numpy.save('labels_test.npy', labels_test)
+        samples, labels=loadData().getData()
+        samples_train, labels_train, samples_test, labels_test = loadData().shuffleData(samples, labels)
     else:
-        print 'loading images from data file: npy'
+        samples_train, labels_train, samples_test, labels_test  = loadData().shuffleData(samples, labels)
         
-        samples_train, labels_train, samples_test, labels_test  = loadData().shuffleData(  numpy.load(defaults.file_dataset), numpy.load(defaults.file_labels))
-        print("Total dataset size:")
-        print("n_samples: %d" % len(labels_train))
-        print("n_test: %d" % len(labels_test))
     if '--load' in args:
         fn = args['--load']
-        print 'loading model from %s ...' % fn
+        #print 'loading model from %s ...' % fn
         model.load(fn)
     else:
-        print 'training %s ...' % Model.__name__
-        #samples = numpy.vstack((samples_train, samples_test))
-        #labels = numpy.concatenate((labels_train, labels_test), axis=0)
-
-        #pca = PCA(samples_train)
+        #print 'training %s ...' % Model.__name__
         model.train(samples_train, labels_train)
 
-    print 'testing...'
-    print 'predicting train'
+    #print 'testing...'
+    #print 'predicting train'
     train_rate = numpy.mean(model.predict(samples_train) != labels_train)
-    print 'predicting test'
+    #print 'predicting test'
     test_rate  = numpy.mean(model.predict(samples_test) != labels_test)
-
-    print 'train error: %f  test error: %f' % (train_rate*100, test_rate*100)
-    print
-    print 'Evaluating model'
-    model.evaluate(samples_test, labels_test)
+    if '--eval' in args:
+        if args['--eval']=='y':
+            print 'train error: %f  test error: %f' % (train_rate*100, test_rate*100)
+            model.evaluate(samples_test, labels_test)
     
     if '--save' in args:
         fn = args['--save']
-        print 'saving model to %s ...' % fn
+        #print 'saving model to %s ...' % fn
         model.save(fn)
 
     if '--camera' in args:
@@ -135,7 +131,13 @@ def main(parameters):
             
 if __name__ == '__main__':
     import sys
-    main(sys.argv[1:])
+    #print 'loading images from data file: npy'
+    samples = numpy.load(defaults.file_dataset)
+    labels = numpy.load(defaults.file_labels)
+    #print("Total dataset size:")
+    #print("n_samples: %d" % len(labels_train))
+    #print("n_test: %d" % len(labels_test))
+    main(sys.argv[1:], samples, labels)
     
         
     
