@@ -30,8 +30,8 @@ samples_train = numpy.load('samples_train.npy')
 labels_train = numpy.load('labels_train.npy')
 samples_test = numpy.load('samples_test.npy')
 labels_test = numpy.load('labels_test.npy')
-X=samples_train
-y=labels_train
+X=numpy.load(defaults.file_dataset)
+y=numpy.load(defaults.file_labels)
 print "len(X)", len(X), "len(X[0])", len(X[0]), X[0]
 print "len(y)", len(y)
 
