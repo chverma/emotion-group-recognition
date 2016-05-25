@@ -47,9 +47,9 @@ class Coordinator(spade.Agent.Agent):
                 cv.SetData(originalImage, imgBin)
                 npArray = numpy.asarray(originalImage[:,:])
 
-                resp = process_image_matrix(npArray)
+                distances = process_image_matrix(npArray)
 
-                if resp!=None:
+                if distances!=None:
                     ### Distribute matrix
 
                     msg = spade.ACLMessage.ACLMessage()
@@ -57,7 +57,7 @@ class Coordinator(spade.Agent.Agent):
                     msg.setOntology("predict-array")
                     for agent in self.myAgent.classificators:
                         msg.addReceiver(agent)
-                        msg.setContent(resp)
+                        msg.setContent(distances)
                         self.myAgent.send(msg)
                     t1=datetime.datetime.now()	
                     print "Sended: ",resp, "time:", (t1-t0)
@@ -93,10 +93,15 @@ class Coordinator(spade.Agent.Agent):
                     for word in self.currentResponses:
                         d[word] += 1
                     
-                    winner = []
+
+                    maxVal = -1
+                    winner =  -1
                     for k in d.keys():
-                        winner.append([d[k], k])
-                    print "winer",sorted(winner, reverse=True)[0][1]
+                        if d[k]>maxVal:
+                            maxVal = d[k]
+                            winner = k
+ 
+                    print "winer",winner
                         
                         
                     #print "Received message6..."
@@ -104,10 +109,10 @@ class Coordinator(spade.Agent.Agent):
                     msg.setPerformative("inform")
                     msg.setOntology("response-predict")
                     msg.addReceiver(spade.AID.aid("nao@"+host,["xmpp://nao@"+host]))
-                    msg.setContent(resp)
+                    msg.setContent(winner)
                     self.myAgent.send(msg)
                     t1=datetime.datetime.now()	
-                    print "Sended to nao: ", sorted(winner, reverse=True)[0][1]
+                    print "Sended to nao: ", winner
                     print "time:", (t1-t0)
                     self.nResponses=0
                     self.currentResponses=[]
