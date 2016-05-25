@@ -3,21 +3,37 @@ import utils.defaults as defaults
 import cv2
 import numpy
 class SVM(StatModel):
-    def __init__(self, C, gamma): #Gastava C=2.67, gamma=5.383
+    def __init__(self, C,gamma): #Gastava C=2.67, gamma=5.383
         if C == None:
             C=2.67
         if gamma == None:
             gamma = 5.383
-            
-        self.params = dict( kernel_type = cv2.SVM_RBF,
+
+        self.model = cv2.SVM()
+        
+    def set_params(self, params=None):
+        if not params:
+            self.params = dict( kernel_type = cv2.SVM_RBF,
                             svm_type = cv2.SVM_C_SVC,
                             C=float(C),
                             gamma=float(gamma) )
-        self.model = cv2.SVM()
-
+        else:
+            #kernel_type = cv2.SVM_LINEAR, cv2.SVM_POLY, cv2.SVM_RBF, 
+            # default: dict( kernel_type = cv2.SVM_RBF,
+            #                svm_type = cv2.SVM_C_SVC)
+            self.params = params
+            
     def train(self, samples, responses):
-        self.model.train(samples, responses, params = self.params)
+        #self.model.train(samples, responses, params = self.params)
+        varInd = None
+        sampleInd =None
+        self.model.train_auto(samples, responses, varInd, sampleInd, params = self.params)
 
+        
+
+    def train_auto(self, samples, responses):
+        self.model.train_auto(samples, responses, params = self.params)
+        
     def predict(self, samples):
         #Thanks a lot http://stackoverflow.com/questions/8687885/python-opencv-svm-implementation
         return numpy.float32( [self.model.predict(s) for s in samples]) #last

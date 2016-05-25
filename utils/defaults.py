@@ -47,6 +47,7 @@ file_labelsKDEF =  'dataset/fdef_labels12.npy'
 file_datasetKDEFNoLog = 'dataset/kdef_dataset12NoLog.npy' 
 file_labelsKDEFNoLog =  'dataset/fdef_labels12NoLog.npy'
 
-file_dataset = file_dataset12NoLog
-file_labels = file_labels12NoLog
+file_dataset = file_dataset12
+file_labels = file_labels12
+use_log = True
 

@@ -31,4 +31,14 @@ class MLP(StatModel):
         ret, resp = self.model.predict(samples)
         return resp.argmax(-1)
     def evaluate(self, samples, labels):
+        resp =  self.predict(samples)
+        #resp = self.model.predict(samples)
+        err = (labels != resp).mean()
+        print 'error: %.2f %%' % (err*100)
+
+        confusion = np.zeros((defaults.CLASS_N, defaults.CLASS_N), np.int32)
+        for i, j in zip(labels, resp):
+            confusion[i, j] += 1
+        print 'confusion matrix:'
+        print confusion
         print

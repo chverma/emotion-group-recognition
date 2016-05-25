@@ -211,12 +211,18 @@ def annotate_landmarks(im, landmarks):
 def process_image(im_path):
     #img = io.imread(im_path)
     img = cv2.imread(im_path,0)
+    #    print "Warning: It cannot obtain landmark on %s"%(im_path)
+    return process_image_matrix(img)
+    
+          
+def process_image_matrix(img):
     #win.clear_overlay()
     #win.set_image(img)
-    
+
     landmark,obtained = get_landmarks(img)
+
     if obtained:           
-        distance_between_points =  get_distance(get_significant_points(landmark), False)
+        distance_between_points =  get_distance(get_significant_points(landmark), defaults.use_log)
         #print distance_between_points
         #plot_data(distance_between_points)
 
@@ -225,14 +231,10 @@ def process_image(im_path):
         ##Print Points
         #win.set_image(annotate_landmarks(img, numpy.matrix(significant_points)))
         #cv2.imwrite('output.jpg', annotate_landmarks(img, numpy.matrix(significant_points))) 
-            
+    
         return distance_between_points
-        
-    print "Warning: It cannot obtain landmark on %s"%(im_path)
+
     return None
-          
-
-
 
     
 
