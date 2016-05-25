@@ -5,7 +5,8 @@
 This is an example about how to use messages (events)
 to trigger the execution of a behaviour (EventBehaviour)
 '''
-
+host = "91.134.135.40"
+#host  = '127.0.0.1'
 import os
 import sys
 import time
@@ -13,10 +14,10 @@ import spade
 import numpy
 from loaddata.processImage import getCamFrame
 sys.path.append('..')
-#host = "127.0.0.1"
-host = '91.134.135.40'#'37.61.152.135'
+
 import cv2
 import datetime
+import base64
 class Sender(spade.Agent.Agent):
     
             
@@ -42,25 +43,16 @@ class Sender(spade.Agent.Agent):
             """
             msg = spade.ACLMessage.ACLMessage()
             msg.setPerformative("inform")
-            msg.setOntology("detect-image")
-            msg.addReceiver(spade.AID.aid("detector@"+host,["xmpp://detector@"+host]))
+            msg.setOntology("predict-image")
+            msg.addReceiver(spade.AID.aid("coordinator@"+host,["xmpp://coordinator@"+host]))
             #print "s1"
             #img = cv2.imread("agents/46.png",0)
-            img = self.predictFromCamera()
+            img = base64.b64encode(self.predictFromCamera())
 
-            numpy.savetxt('test.out', img,fmt='%i')
-            #print "s2.1"
-            img_file = open("test.out",'r')
-            #print "s3"
-            raw = ""
-            for im in img:#xrange(480):
-                line=img_file.readline()
-                raw = raw+','+line
-
-            msg.setContent(raw)
+            msg.setContent(img)
  
             self.myAgent.send(msg)
-            #print "Sended!"
+            print "Sended!"
            
     class RecvMsgBehav(spade.Behaviour.Behaviour):
         """
@@ -87,12 +79,12 @@ class Sender(spade.Agent.Agent):
     def _setup(self):
         # Create the template for the EventBehaviour: a message from myself
         template = spade.Behaviour.ACLTemplate()
-        template.setOntology("emotion-detected")
+        template.setOntology("response-predict")
         t = spade.Behaviour.MessageTemplate(template)
 
         self.addBehaviour(self.RecvMsgBehav(),t)
         # Add the sender behaviour
-        b = self.SendMsgBehav(5)
+        b = self.SendMsgBehav(1)
         self.addBehaviour(b, None)
 
     

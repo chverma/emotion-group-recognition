@@ -39,8 +39,8 @@ class Sender(spade.Agent.Agent):
             """
             msg = spade.ACLMessage.ACLMessage()
             msg.setPerformative("inform")
-            msg.setOntology("detect-image")
-            msg.addReceiver(spade.AID.aid("detector@"+host,["xmpp://detector@"+host]))
+            msg.setOntology("predict-image")
+            msg.addReceiver(spade.AID.aid("coordinator@"+host,["xmpp://coordinator@"+host]))
             im = getNAO_image_PIL(IP,PORT)
 
             msg.setContent(im)
@@ -77,7 +77,7 @@ class Sender(spade.Agent.Agent):
     def _setup(self):
         # Create the template for the EventBehaviour: a message from myself
         template = spade.Behaviour.ACLTemplate()
-        template.setOntology("emotion-detected")
+        template.setOntology("response-predict")
         t = spade.Behaviour.MessageTemplate(template)
 
         self.addBehaviour(self.RecvMsgBehav(),t)
