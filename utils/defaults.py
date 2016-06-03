@@ -34,7 +34,7 @@ model_mlp_xml = 'models/mlp12F.xml'
 model_knearest_xml = 'models/knearest1.xml'
 model_boost_xml = 'models/boost6.xml'
 model_shape = 'models/shape_predictor_68_face_landmarks.dat'
-
+model_feautures = 'models/KDEF_RFE.npy'
 ## DATASET (distances and labels)
 ### 68 punts, calcul de TOTES les distancies
 CAFE_data = 'dataset/cafe_data.npy' 
