@@ -48,9 +48,14 @@ class LoadAndShuffleData():
             for rec in csv.reader(csvfile, delimiter='	'):
                 sadfiles += rec
         
-
+        # create a list for filenames of disgust pictures
+        angryfiles = []
+        with open(defaults.angry_csv, 'rb') as csvfile:
+            for rec in csv.reader(csvfile, delimiter='	'):
+                angryfiles += rec
+                
         # N x dim matrix to store the vectorized data (aka feature space)       
-        phi = numpy.zeros((len(happyfiles) + len(neutralfiles) + len(disgustfiles)+len(fearfiles) + len(surprisedfiles) + len(sadfiles), defaults.dim),numpy.float32)
+        phi = numpy.zeros((len(happyfiles) + len(neutralfiles) + len(disgustfiles)+len(fearfiles) + len(surprisedfiles) + len(sadfiles)+ len(angryfiles), defaults.dim),numpy.float32)
 
         # 1 x N vector to store binary labels of the data: 1 for smile and 0 for neutral
         labels = []
@@ -114,6 +119,16 @@ class LoadAndShuffleData():
             phi[idx + offset] = distances
             labels.append(5)
         print "loaded sad"
+        
+        # load angry data
+        offset = offset+idx + 1
+        for idx, filename in enumerate(angryfiles):
+            distances=process_image(defaults.angry_imgs + filename)
+            if distances==None:
+                rem_indx.append(idx+offset)
+            phi[idx + offset] = distances
+            labels.append(6)
+        print "loaded angry"
         
         rem = 0 
         if len(rem_indx)>0:

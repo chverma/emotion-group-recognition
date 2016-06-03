@@ -126,13 +126,14 @@ def get_significant_points12Features(landmark):
 def get_significant_points51(landmark):
     significant_points = []        
              
-    for i in xrange(16,68):
+    for i in xrange(68):
         significant_points.append( [landmark[i, 0], landmark[i, 1]] )
 
     return significant_points
 
 def get_significant_points(landmark):
-    return get_significant_points12Features(landmark)
+    #return get_significant_points12Features(landmark)
+    return get_significant_points51(landmark)
 #####################################
 ## This function returns the distance between certain points. This points and 
 ## and distances corresponds of the second draw
@@ -187,15 +188,29 @@ def get_distance51Features(significant_points):
     def calc_dist(a,b):
         return ( ((b[0]-a[0])**2) + ((b[1]-a[1])**2) )**(0.5)
         
-    for i in xrange(len(significant_points)-1):
-        distance.append( calc_dist(significant_points[i],significant_points[i+1]) )
+    for i in xrange(len(significant_points)):
+        dreta=i+1
+        for d in xrange(dreta,len(significant_points)):
+
+            distance.append( calc_dist(significant_points[i],significant_points[d]) )
+
     return distance
 
 def get_distance(significant_points, log):
+    '''
     if not log:
         return get_distance12Features(significant_points)
     else:
         return numpy.asarray(map(lambda x: math.log10(x), get_distance12Features(significant_points)), dtype=numpy.float32)
+    ''' 
+    if not log:
+        return get_distance51Features(significant_points)
+    else:
+        try:
+            return numpy.asarray(map(lambda x: math.log10(x), get_distance51Features(significant_points)), dtype=numpy.float32)
+        except:
+            print "Exception"
+            return numpy.asarray([])    
         
 def annotate_landmarks(im, landmarks):
     im = im.copy()
@@ -207,7 +222,16 @@ def annotate_landmarks(im, landmarks):
                     color=(255, 0, 255))
         cv2.circle(im, pos, 3, color=(0, 255, 255))
     return im
+
+def annotate_distances(im, landmarks,dist):
+    im = im.copy()
     
+    for p1,p2 in dist:
+        pos = (landmarks[p1, 0], landmarks[p1, 1])
+        pos2 = (landmarks[p2, 0], landmarks[p2, 1])
+        cv2.line(im, pos,pos2, color=(0, 255, 255))
+    return im
+
 def process_image(im_path):
     #img = io.imread(im_path)
     img = cv2.imread(im_path,0)

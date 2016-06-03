@@ -11,7 +11,7 @@ import cv2
 import cv
 import math
 import numpy
-
+import time
 import dlib
 # models classes
 from classes.SVM import SVM
@@ -29,13 +29,14 @@ from loaddata.processImage import get_landmarks
 from loaddata.processImage import annotate_landmarks
 # defaults
 import utils.defaults as defaults
-
-
+indx=None
+cols=None
 def predictFromCamera(model):
     win = dlib.image_window()
     ##predict from camera
     camera=cv2.VideoCapture(0)
     resp=0
+
     while True:
         
         img=getCamFrame(True,camera)
@@ -54,8 +55,19 @@ def predictFromCamera(model):
             ##Print Points
             win.set_image(annotate_landmarks(img, numpy.matrix(landmark)))
             #dlib.hit_enter_to_continue()
-            resp = int(model.predict(numpy.float32([distance_between_points]))) # This predict does not work with Knearest
-            
+            nDistance = len(distance_between_points)
+            print nDistance
+            print len(distance_between_points)
+            if nDistance:
+                
+                ob = numpy.float32([distance_between_points])[:,indx]
+                print "1",len(ob[0])
+                if cols!=None:
+                    ob = numpy.delete(ob, list(cols), 1)
+                print "2",len(ob[0])
+                resp = int(model.predict(ob)) # This predict does not work with Knearest
+            #else:
+            #    resp = int(model.predict(numpy.float32([distance_between_points])))
             #print "response",defaults.emotions[resp]           
 def main(parameters, samples, labels):
     import getopt
@@ -81,19 +93,24 @@ def main(parameters, samples, labels):
     
     model = Model(args['--param1'], args['--param2'])
     if args['--model']=='svm':
+        '''
         #http://docs.opencv.org/2.4/modules/ml/doc/support_vector_machines.html#cvsvmparams-cvsvmparams
         model.set_params(dict( kernel_type = cv2.SVM_RBF,
                             svm_type = cv2.SVM_NU_SVC,
-                            nu=0.3,
-                            degree = 1
+                            degree = 1,
+                            nu=0.3
                             ))
         #POLY: degree = 1, NU_SVC: nu=0.3
+        '''
+        model.set_params(None)
     samples_train=None
     labels_train=None
     samples_test=None
     labels_test = None
     if '--imgFiles' in args:
         print 'loading images from %s ...' % defaults.img_directory
+        import utils.toCSV as toCSV
+        toCSV.parse(defaults.emotions, defaults.data_path, defaults.dataset)
         samples, labels=loadData().getData()
         samples_train, labels_train, samples_test, labels_test = loadData().shuffleData(samples, labels)
     else:
@@ -104,9 +121,10 @@ def main(parameters, samples, labels):
         #print 'loading model from %s ...' % fn
         model.load(fn)
     else:
+        t0 = time.time()
         #print 'training %s ...' % Model.__name__
         model.train(samples_train, labels_train)
-
+        print "time_training:",time.time()-t0
     #print 'testing...'
     #print 'predicting train'
     train_rate = numpy.mean(model.predict(samples_train) != labels_train)
@@ -132,8 +150,22 @@ def main(parameters, samples, labels):
 if __name__ == '__main__':
     import sys
     #print 'loading images from data file: npy'
+    #If not exists, pass null
+
     samples = numpy.load(defaults.file_dataset)
     labels = numpy.load(defaults.file_labels)
+    indx = numpy.load(defaults.model_feautures)
+    samples = samples[:,indx]
+    nSamples= len(samples)
+    if defaults.use_log:
+        itemindex = numpy.where(samples==0)
+        cols = set(itemindex[1])
+        samples = numpy.delete(samples, list(cols), 1)
+        samples= numpy.asarray(map(lambda x: math.log10(x), list(samples.reshape(-1,))), dtype=numpy.float32)
+        samples = samples.reshape(nSamples,-1)
+
+    #samples=None
+    #labels=None
     #print("Total dataset size:")
     #print("n_samples: %d" % len(labels_train))
     #print("n_test: %d" % len(labels_test))
