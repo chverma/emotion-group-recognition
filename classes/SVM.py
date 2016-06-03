@@ -13,22 +13,29 @@ class SVM(StatModel):
         
     def set_params(self, params=None):
         if not params:
-            self.params = dict( kernel_type = cv2.SVM_RBF,
-                            svm_type = cv2.SVM_C_SVC,
-                            C=float(C),
-                            gamma=float(gamma) )
+            self.params = dict(kernel_type = cv2.SVM_RBF,
+                            svm_type = cv2.SVM_NU_SVC,
+                            #gamma=3.3750000000000002e-02, ##UNION
+                            gamma=5.0625000000000009e-01, ##KDEF
+                            #nu=1.0000000000000000e-02) ##UNION
+                            nu=8.9999999999999997e-02) ##KDEF
+                            
+            self.auto=False
         else:
             #kernel_type = cv2.SVM_LINEAR, cv2.SVM_POLY, cv2.SVM_RBF, 
             # default: dict( kernel_type = cv2.SVM_RBF,
             #                svm_type = cv2.SVM_C_SVC)
             self.params = params
+            self.auto=True
             
     def train(self, samples, responses):
         #self.model.train(samples, responses, params = self.params)
         varInd = None
         sampleInd =None
-        self.model.train_auto(samples, responses, varInd, sampleInd, params = self.params)
-
+        if self.auto:
+            self.model.train_auto(samples, responses, varInd, sampleInd, params = self.params)
+        else:
+            self.model.train(samples, responses, params = self.params)
         
 
     def train_auto(self, samples, responses):
