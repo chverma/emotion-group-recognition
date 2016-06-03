@@ -76,8 +76,9 @@ class webModel(object):
             print 'explained variance ratio (first 3 components): %s'%( str(self.lda.explained_variance_ratio_))
 
         self.model.train(samples_train,labels_train)
+        self.model.evaluate(samples_train,labels_train)
         
-    def evaluate(self,samples, labels):
+    def evaluate(self,samples, labels, labels_train):
         if self.classifier=='knnLda':
             samples = numpy.float32(self.lda.transform(samples))
         self.model.evaluate(samples,labels)

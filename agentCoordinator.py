@@ -45,10 +45,12 @@ class Coordinator(spade.Agent.Agent):
                 imgBin  = base64.b64decode(self.msg.getContent())
                 originalImage = cv.CreateImageHeader((640, 480), cv.IPL_DEPTH_8U, 1)
                 cv.SetData(originalImage, imgBin)
+                del imgBin
+                
                 npArray = numpy.asarray(originalImage[:,:])
-
+                del originalImage
                 distances = process_image_matrix(npArray)
-
+                del npArray
                 if distances!=None:
                     ### Distribute matrix
 
@@ -60,9 +62,15 @@ class Coordinator(spade.Agent.Agent):
                         msg.setContent(distances)
                         self.myAgent.send(msg)
                     t1=datetime.datetime.now()	
-                    print "Sended: ",resp, "time:", (t1-t0)
+                    #print "Sended: ",distances, "time:", (t1-t0)
+                    del msg
+                
+                    del distances
+                    print "Deleted"
                 else:
                     print "No lendmark :("
+                
+                del self.msg
             else:
                 print "No messages"
 
@@ -70,7 +78,7 @@ class Coordinator(spade.Agent.Agent):
     class RecvClassificators(spade.Behaviour.Behaviour):
         def onStart(self):
             print "Starting behaviour RecvFromModels. . ."
-            self.maxResponses=2
+            self.maxResponses=10
             self.nResponses=0
             self.currentResponses=[]
         def _process(self):
