@@ -15,10 +15,12 @@ class SVM(StatModel):
         if not params:
             self.params = dict(kernel_type = cv2.SVM_RBF,
                             svm_type = cv2.SVM_NU_SVC,
-                            #gamma=3.3750000000000002e-02, ##UNION
-                            gamma=5.0625000000000009e-01, ##KDEF
+                            gamma=1.0000000000000001e-05, ##UNION
+                            #gamma=1.0000000000000001e-05, ##KDEF
+                            #gamma=1.0000000000000001e-05, ##JAFFE
                             #nu=1.0000000000000000e-02) ##UNION
-                            nu=8.9999999999999997e-02) ##KDEF
+                            nu=1.0000000000000000e-02) ##KDEF
+                            #nu=1.0000000000000000e-02) ##JAFFE
                             
             self.auto=False
         else:

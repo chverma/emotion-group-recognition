@@ -28,18 +28,14 @@ from loaddata.processImage import get_landmarks
 from loaddata.processImage import annotate_landmarks
 # defaults
 import utils.defaults as defaults
-
+import datetime
 class webModel(object):
     def __init__(self, classifier, samples_train, labels_train):
         self.classifier=classifier
         
         if classifier=='svm':
-            self.model = SVM(7,0.0000056 )
-            self.model.set_params(dict( kernel_type = cv2.SVM_RBF,
-                            svm_type = cv2.SVM_SVC,
-                            nu=0.3,
-                            degree = 1
-                            ))  
+            self.model = SVM(1,1)
+            self.model.set_params(None)  
         elif classifier=='mlp':
             self.model = MLP(31,8)
            
@@ -78,23 +74,31 @@ class webModel(object):
         self.model.train(samples_train,labels_train)
         self.model.evaluate(samples_train,labels_train)
         
-    def evaluate(self,samples, labels, labels_train):
+    def evaluate(self,samples, labels):
         if self.classifier=='knnLda':
             samples = numpy.float32(self.lda.transform(samples))
         self.model.evaluate(samples,labels)
         
-    def predictFromMatrix(self,img):
+    def predictFromMatrix(self,img,indx, cols):
         landmark, obtained = get_landmarks(img)
         
         if obtained:
             #print "lendmark obtained from  matrix method"
+            t0=datetime.datetime.now()
             significant_points = get_significant_points(landmark)
             distance_between_points =  get_distance(significant_points, False)
+            ob = numpy.float32([distance_between_points])[:,indx]
+            print "1",len(ob[0])
+            if cols!=None:
+                ob = numpy.delete(ob, list(cols), 1)
+                print "2",len(ob[0])
+                ob=numpy.log10(ob)
+            print "time predictFromMatrix",(datetime.datetime.now()-t0)
 
             if self.classifier=='knnLda':
                 distance_between_points = self.lda.transform([distance_between_points])
             #print distance_between_points
-            result = int(self.model.predict(numpy.float32([distance_between_points])))
+            result = int(self.model.predict(ob))
 
             return result
         else:
