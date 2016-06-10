@@ -29,6 +29,7 @@ from loaddata.processImage import get_landmarks
 from loaddata.processImage import annotate_landmarks
 # defaults
 import utils.defaults as defaults
+from scripts.preprocess.drawPointsAndLines import drawPointsAndLines as drawPointsAndLines
 indx=None
 cols=None
 def predictFromCamera(model):
@@ -56,15 +57,15 @@ def predictFromCamera(model):
             win.set_image(annotate_landmarks(img, numpy.matrix(landmark)))
             #dlib.hit_enter_to_continue()
             nDistance = len(distance_between_points)
-            print nDistance
-            print len(distance_between_points)
+            #print nDistance
+            #print len(distance_between_points)
             if nDistance:
                 
                 ob = numpy.float32([distance_between_points])[:,indx]
-                print "1",len(ob[0])
+                #print "1",len(ob[0])
                 if cols!=None:
                     ob = numpy.delete(ob, list(cols), 1)
-                print "2",len(ob[0])
+                #print "2",len(ob[0])
                 resp = int(model.predict(ob)) # This predict does not work with Knearest
             #else:
             #    resp = int(model.predict(numpy.float32([distance_between_points])))
@@ -77,23 +78,27 @@ def main(parameters, samples, labels):
     # Dtrees, GBTrees, ERTrees, EM
     models = dict( [(cls.__name__.lower(), cls) for cls in models] )
     '''
-    print 'USAGE: emotionDetection.py [--model <model>] [--param1 <k,C,nh value>] [--param2 <gamma value>] [--imgFiles] [--load <model fn>] [--save <model fn>] [--camera <on/off> [--eval <y/n>]'
+    print 'USAGE: emotionDetection.py [--model <model>] [--param1 <k,C,nh value>] [--param2 <gamma value>] [--imgFiles] [--load <model fn>] [--save <model fn>] [--camera <on/off> [--eval <y/n>] [--draw <y/n>]'
     print 'Models: ', ', '.join(models)
     print
     '''
-    args, dummy = getopt.getopt(parameters, '', ['model=', 'imgFiles=', 'param1=', 'param2=','load=', 'imgFiles=','load=','save=', 'camera=', 'eval='])
+    args, dummy = getopt.getopt(parameters, '', ['model=', 'imgFiles=', 'param1=', 'param2=','load=', 'imgFiles=','load=','save=', 'camera=', 'eval=' , 'draw='])
     args = dict(args)
     args.setdefault('--camera', 'on')
     args.setdefault('--model', 'svm')
     args.setdefault('--param1', None)
     args.setdefault('--param2', None)
     args.setdefault('--eval', 'y')
+    args.setdefault('--draw', 'n')
 
+    if '--draw' in args and 'y'==args['--draw']: 
+            drawPointsAndLines(defaults.model_feautures, '/home/chverma/UPV/TFG/data/faces/KDEF/happy/AF33HAS.JPG')
+            exit()
     Model = models[args['--model']]
     
     model = Model(args['--param1'], args['--param2'])
     if args['--model']=='svm':
-        '''
+        ''' 
         #http://docs.opencv.org/2.4/modules/ml/doc/support_vector_machines.html#cvsvmparams-cvsvmparams
         model.set_params(dict( kernel_type = cv2.SVM_RBF,
                             svm_type = cv2.SVM_NU_SVC,
@@ -103,6 +108,7 @@ def main(parameters, samples, labels):
         #POLY: degree = 1, NU_SVC: nu=0.3
         '''
         model.set_params(None)
+         
     samples_train=None
     labels_train=None
     samples_test=None
@@ -124,7 +130,7 @@ def main(parameters, samples, labels):
         t0 = time.time()
         #print 'training %s ...' % Model.__name__
         model.train(samples_train, labels_train)
-        print "time_training:",time.time()-t0
+        #print "time_training:",time.time()-t0
     #print 'testing...'
     #print 'predicting train'
     train_rate = numpy.mean(model.predict(samples_train) != labels_train)
@@ -133,7 +139,7 @@ def main(parameters, samples, labels):
     if '--eval' in args:
         if args['--eval']=='y':
             print 'train error: %f  test error: %f' % (train_rate*100, test_rate*100)
-            model.evaluate(samples_test, labels_test)
+            return model.evaluate(samples_test, labels_test)
     
     if '--save' in args:
         fn = args['--save']
@@ -155,6 +161,9 @@ if __name__ == '__main__':
     samples = numpy.load(defaults.file_dataset)
     labels = numpy.load(defaults.file_labels)
     indx = numpy.load(defaults.model_feautures)
+    nInd=len(indx)*0.4
+    indx=indx[0:nInd]
+
     samples = samples[:,indx]
     nSamples= len(samples)
     if defaults.use_log:
@@ -163,9 +172,10 @@ if __name__ == '__main__':
         samples = numpy.delete(samples, list(cols), 1)
         samples= numpy.asarray(map(lambda x: math.log10(x), list(samples.reshape(-1,))), dtype=numpy.float32)
         samples = samples.reshape(nSamples,-1)
-
-    #samples=None
-    #labels=None
+    '''
+    samples=None
+    labels=None
+    '''
     #print("Total dataset size:")
     #print("n_samples: %d" % len(labels_train))
     #print("n_test: %d" % len(labels_test))

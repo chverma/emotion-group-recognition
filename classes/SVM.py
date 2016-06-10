@@ -61,3 +61,4 @@ class SVM(StatModel):
         print 'confusion matrix:'
         print confusion
         print
+        return confusion

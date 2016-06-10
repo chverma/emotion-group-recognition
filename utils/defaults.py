@@ -1,12 +1,12 @@
 ##########DEFAULTS
 dim = 2278 ## bacause I use 12 distances
-dataset = 'KDEF' # JAFFE, KDEF, UNION
+dataset = 'UNION' # JAFFE, KDEF, UNION, CAFE
 data_path = '/home/chverma/UPV/TFG/data/'
 
 emotions=["happy","neutral","disgust","fear","surprised","sad","angry"]
 CLASS_N = 7 ## At the moment 7 classes
     
-use_log = True
+use_log = False
 
 ## CSVs
 happy_csv   = data_path+'csv/happy.csv'
@@ -39,6 +39,9 @@ model_feautures = 'models/KDEF_RFE.npy'
 ### 68 punts, calcul de TOTES les distancies
 CAFE_data = 'dataset/cafe_data.npy' 
 CAFE_labels =  'dataset/cafe_labels.npy'
+
+JAFFE_data = 'dataset/jaffe_data.npy' 
+JAFFE_labels =  'dataset/jaffe_labels.npy'
 
 KDEF_data = 'dataset/kdef_data.npy' 
 KDEF_labels =  'dataset/kdef_labels.npy'
