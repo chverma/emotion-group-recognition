@@ -16,7 +16,7 @@ def getCamFrame(color,camera):
     
 camera=cv2.VideoCapture(0)
 cont=0
-while cont<50:
+while cont<169:
     
     img=getCamFrame(True,camera)
     

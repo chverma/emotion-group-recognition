@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 from sklearn.datasets import make_classification
 from sklearn.ensemble import ExtraTreesClassifier
 import numpy
-import utils.defaults as defaults
 '''
 # Build a classification task using 3 informative features
 X, y = make_classification(n_samples=6000,
@@ -17,8 +16,8 @@ X, y = make_classification(n_samples=6000,
                            n_classes=2 )#,random_state=0,shuffle=False)
                            
 '''                           
-X  = numpy.load(defaults.KDEF_data)
-y  = numpy.load(defaults.KDEF_labels)
+X  = numpy.load('dataset/kdef_data.npy' )
+y  = numpy.load('dataset/kdef_labels.npy' )
 # Build a forest and compute the feature importances
 forest = ExtraTreesClassifier(n_estimators=250)#,random_state=0)
                               
@@ -37,7 +36,7 @@ for f in range(X.shape[1]):
     print("%d. feature %d (%f)" % (f + 1, indices[f], importances[indices[f]]))
 '''
 nFeatures=int(X.shape[1]*1)
-threshold=int(X.shape[1]*0.4)
+threshold=int(X.shape[1]*0.16)
 print "nFeatures", nFeatures
 indices = indices[0:nFeatures]
 # Plot the feature importances of the forest
@@ -45,13 +44,13 @@ plt.figure()
 plt.title("Importancia de les caracteristiques")
 plt.bar(range(0,nFeatures), importances[indices],color="k", align="center")#,yerr=std[indices])
 #plt.plot(range(nFeatures), importances[indices],color="r")
-plt.plot([threshold, threshold], [0, 0.0045], "k--")
-plt.xticks(range(0,nFeatures,100), indices[range(0,nFeatures,100)], rotation=-60)
+plt.plot([threshold, threshold], [0, 0.0045], "k--",linewidth=3)
+#plt.xticks(range(0,nFeatures,100), indices[range(0,nFeatures,100)], rotation=-60)
 plt.xlim([-1, nFeatures])
 
-plt.xlabel("Caracteristica")
+plt.xlabel("Caracteristiques")
 plt.ylabel("Importancia")
 
-numpy.save('features_importance.npy',indices[0:threshold])
+#numpy.save('features_importance.npy',indices[0:threshold])
 plt.show()
 
