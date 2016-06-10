@@ -21,11 +21,26 @@ import webModel
 import cv2
 import time
 import Image
-
+import math
 import cv
-wM = webModel.webModel()
+
 cont=0
 import utils.defaults as defaults
+
+KDEF_data = numpy.load(defaults.KDEF_data)
+KDEF_labels = numpy.load(defaults.KDEF_labels)
+UNION_samples = numpy.load(defaults.UNION_data)
+UNION_labels = numpy.load(defaults.UNION_labels)
+indx = numpy.load(defaults.model_feautures)
+samples = UNION_samples[:,indx]
+nSamples= len(samples)
+if defaults.use_log:
+        itemindex = numpy.where(samples==0)
+        cols = set(itemindex[1])
+        samples = numpy.delete(samples, list(cols), 1)
+        samples= numpy.asarray(map(lambda x: math.log10(x), list(samples.reshape(-1,))), dtype=numpy.float32)
+        samples = samples.reshape(nSamples,-1)
+wM = webModel.webModel('svm',samples,UNION_labels)
 class Detector(spade.Agent.Agent):
    
     class RecvMsgBehav(spade.Behaviour.Behaviour):
@@ -52,11 +67,11 @@ class Detector(spade.Agent.Agent):
 
                 msg = spade.ACLMessage.ACLMessage()
                 msg.setPerformative("inform")
-                msg.setOntology("emotion-detected")
+                msg.setOntology("response-predict")
                 msg.addReceiver(spade.AID.aid("nao@"+host,["xmpp://nao@"+host]))
                 
                 #print "Received message5..."
-                indxEmo = wM.predictFromMatrix(npArray)
+                indxEmo = wM.predictFromMatrix(npArray,indx, cols)
                 if indxEmo>-1:
                     resp = defaults.emotions[indxEmo]
                 else:
@@ -76,7 +91,7 @@ class Detector(spade.Agent.Agent):
     def _setup(self):
         # Create the template for the EventBehaviour: a message from myself
         template = spade.Behaviour.ACLTemplate()
-        template.setOntology("detect-image")
+        template.setOntology("predict-image")
         t = spade.Behaviour.MessageTemplate(template)
         self.cont=0
         # Add the EventBehaviour with its template
@@ -86,7 +101,7 @@ class Detector(spade.Agent.Agent):
         #self.addBehaviour(self.SendMsgBehav())
 
     
-a = Detector("detector@"+host,"secret")
+a = Detector("coordinator@"+host,"secret")
 
 a.start()
 
