@@ -11,10 +11,11 @@ class SVM(StatModel):
 
         self.model = cv2.SVM()
         
-    def set_params(self, params=None):
+    def set_params(self, params=None,mod=False):
         if not params:
             self.params = dict(kernel_type = cv2.SVM_RBF,
                             svm_type = cv2.SVM_NU_SVC,
+                            #svm_type = cv2.SVM_NU_SVR,
                             gamma=1.0000000000000001e-05, ##UNION
                             #gamma=1.0000000000000001e-05, ##KDEF
                             #gamma=1.0000000000000001e-05, ##JAFFE
@@ -30,6 +31,13 @@ class SVM(StatModel):
             self.params = params
             self.auto=True
             
+        if mod:
+            self.params = dict(kernel_type = cv2.SVM_RBF,
+                            svm_type = cv2.SVM_NU_SVC,
+                            gamma=1.0000000000000001e-05, 
+                            nu=2.9999999999999999e-02)
+            self.auto=False
+            
     def train(self, samples, responses):
         #self.model.train(samples, responses, params = self.params)
         varInd = None
@@ -44,13 +52,14 @@ class SVM(StatModel):
         self.model.train_auto(samples, responses, params = self.params)
         
     def predict(self, samples):
-        #Thanks a lot http://stackoverflow.com/questions/8687885/python-opencv-svm-implementation
+        #Thanks a lot http://stackoverflow.com/questions/8687885/python-opencv-svm-implementation        
         return numpy.float32( [self.model.predict(s) for s in samples]) #last
         #return self.model.predict_all(samples).ravel()
         #return self.model.predict(samples).ravel()
         return self.model.predict(samples);
-    def evaluate(self, samples, labels):
-        resp =  numpy.float32( [self.model.predict(s) for s in samples])
+    def evaluate(self, samples, labels,resp=None):
+        if resp==None:
+            resp =  numpy.float32( [self.model.predict(s) for s in samples])
         #resp = self.model.predict(samples)
         err = (labels != resp).mean()
         print 'error: %.2f %%' % (err*100)

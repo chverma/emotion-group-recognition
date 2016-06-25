@@ -28,10 +28,12 @@ class MLP(StatModel):
         self.model.train(samples, np.float32(new_responses), None, params = params)
 
     def predict(self, samples):
+
         ret, resp = self.model.predict(samples)
         return resp.argmax(-1)
-    def evaluate(self, samples, labels):
-        resp =  self.predict(samples)
+    def evaluate(self, samples, labels,resp=None):
+        if resp==None:
+            resp =  self.predict(samples)
         #resp = self.model.predict(samples)
         err = (labels != resp).mean()
         print 'error: %.2f %%' % (err*100)
