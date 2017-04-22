@@ -16,5 +16,11 @@ sudo apt-get install opencv cmake
 sudo pip install dlib # be careful with free memory, consumes ~2GB compiling final step (99%)
 sudo pip install pillow matplotlib
 sudo apt-get install python-tk
+https://github.com/javipalanca/spade.git
+cd spade
+sudo python setup.py install
+python configure.py localhost
+python runspade.py
+pip install sklearn scipy 
 
 ```
