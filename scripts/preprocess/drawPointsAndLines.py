@@ -1,6 +1,6 @@
 
-from loaddata.processImage import get_significant_points
-from loaddata.processImage import get_distance
+from loaddata.processImage import getAllPoints
+from loaddata.processImage import getProcessedDistances
 from loaddata.processImage import get_landmarks
 from loaddata.processImage import annotate_landmarks
 from loaddata.processImage import annotate_distances
@@ -17,8 +17,8 @@ def drawPointsAndLines(name_features_npy,name_imgfile):
 
     landmark, obtained = get_landmarks(img)
     if obtained:
-            significant_points = get_significant_points(landmark)
-            distance_between_points =  get_distance(significant_points, defaults.use_log)
+            significant_points = getAllPoints(landmark)
+            distance_between_points =  getProcessedDistances(significant_points, defaults.use_log)
             totalDist=[]
             for i in xrange(len(significant_points)):
                 dreta=i+1

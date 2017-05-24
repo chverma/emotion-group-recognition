@@ -23,8 +23,8 @@ from classes.Boost import Boost
 # loaddata
 from loaddata.LoadAndShuffleData import LoadAndShuffleData as loadData
 from loaddata.processImage import getCamFrame
-from loaddata.processImage import get_significant_points
-from loaddata.processImage import get_distance
+from loaddata.processImage import getAllPoints
+from loaddata.processImage import getProcessedDistances
 from loaddata.processImage import get_landmarks
 from loaddata.processImage import annotate_landmarks
 # defaults
@@ -49,9 +49,8 @@ def predictFromCamera(model):
         #img = numpy.asrray(b)
         landmark, obtained = get_landmarks(img)
         if obtained:
-            significant_points = get_significant_points(landmark)
-            distance_between_points =  get_distance(significant_points, defaults.use_log)
-            
+            significant_points = getAllPoints(landmark)
+            distance_between_points = getProcessedDistances(significant_points, defaults.use_log)
             #win.set_image(img)
             ##Print Points
             win.set_image(annotate_landmarks(img, numpy.matrix(landmark)))
