@@ -8,3 +8,4 @@ models/SVM/*
 *.txt
 *.bak
 trash/*
+config.json
