@@ -26,20 +26,20 @@ if model=='knearest':
         for _ in xrange(reps):
             filepath = ['--model',  'knearest', '--camera', 'off', '--param1', str(i), '--eval','n']
             totalError=totalError+main(filepath,samples, labels)
-        
+
         knnError = float(totalError)/reps
         print "knn",i, 100-knnError
         if bestKnearestError>knnError:
             bestKnearestError=knnError
             bestKnearest=i
         #print "Mean Error k=%i: %f "%(i,knnError)
-        
+
     print "Best knn: k=%i, accuracy:%f"%( bestKnearest, (100-bestKnearestError) ), "%"
 elif model=='svm':
     ###############################################################
-    ## SVM test 
-    
-    
+    ## SVM test
+
+
     minErr = 100
     maxErr =-1
     sumErr = 0
@@ -49,7 +49,7 @@ elif model=='svm':
         fname = 'models/SVM/NU_SVR_RBF/svm%i.xml'%(i)
         print i,fname
         filepath = ['--model',  'svm', '--camera', 'off', '--eval','n']#, '--save',fname]
-        currErr = main(filepath,samples, labels)
+        currErr = main(filepath, samples, labels)
         sumErr=sumErr+currErr
         #print "err: ", (100-currErr)
         if currErr>maxErr:
@@ -57,7 +57,7 @@ elif model=='svm':
         if currErr<minErr:
             minErr=currErr
             idxMin=i
-            
+
     print "Best svm (i:%i)accuracy:%f, worst accuracy:%f, meanAccuracy:%f"%( idxMin, (100-minErr), (100-maxErr), (100-float(sumErr)/reps) )
 
 elif model=='mlp':
@@ -66,7 +66,7 @@ elif model=='mlp':
     par_possible = numpy.int8(numpy.asarray(par_possible))
     ###############################################################
     ## MLP test
-    print "MLP parposible" 
+    print "MLP parposible"
     reps = 1
     err = []
     #for i,j in par_possible:
@@ -85,7 +85,7 @@ elif model=='mlp':
     print sorted(err)[0:20]
 elif model=='boost':
     ###############################################################
-    ## Boost test 
+    ## Boost test
     reps = 50
     err = []
 
@@ -95,17 +95,17 @@ elif model=='boost':
         for _ in xrange(reps):
             filepath = ['--model',  'boost', '--camera', 'off', '--param1', str(i), '--eval','n']
             sumErr=sumErr+main(filepath,samples, labels)
-        
+
         currErr  = float(sumErr)/ reps
         print i, currErrwhere
-        err.append([currErr, i])    
-        
+        err.append([currErr, i])
+
     print sorted(err)[0:5]
     numpy.save('err_boost.npy', err)
-    
+
 elif model=='rtrees':
     ###############################################################
-    ## Rtrees test 
+    ## Rtrees test
     reps = 50
     err = []
     #xrange(50,350):
@@ -115,9 +115,36 @@ elif model=='rtrees':
         for _ in xrange(reps):
             filepath = ['--model',  'rtrees', '--camera', 'off', '--param1', str(i), '--eval','n']
             sumErr=sumErr+main(filepath,samples, labels)
-        
+
         currErr  = float(sumErr)/ reps
-        err.append([currErr, i])    
-        
+        err.append([currErr, i])
+
     print sorted(err)[0:5]
     numpy.save('err_rtrees3.npy', err)
+elif model=='mlp2':
+    par_possible = [[1.9130434782608696, 40], [2.0000000000000004, 30], [2.0000000000000004, 77], [2.0869565217391304, 48], [2.1739130434782608, 57], [2.1739130434782612, 69], [2.2608695652173916, 39], [2.2608695652173916, 100], [2.4347826086956523, 25], [2.4347826086956523, 41], [2.4347826086956523, 44], [2.4347826086956523, 52], [2.4347826086956523, 64], [2.4347826086956523, 91], [2.4347826086956523, 92], [2.5217391304347831, 70], [2.6086956521739131, 47], [2.6086956521739131, 51], [2.6086956521739131, 93], [2.6956521739130439, 33]]
+
+    par_possible = [[2.4347826086956523, 91], [2.4347826086956523, 92], [2.5217391304347831, 70]]
+    par_possible = [ [2.6086956521739131, 47], [2.6086956521739131, 51]]
+    par_possible = [[2.6086956521739131, 93], [2.6956521739130439, 33]]
+
+    par_possible = numpy.int8(numpy.asarray(par_possible))
+    ###############################################################
+    ## MLP test
+    print "MLP2"
+    reps = 50
+    err = []
+    for j,i in par_possible:
+        #for i in xrange(2,101):
+            totalError=0
+            print i
+            for _ in xrange(reps):
+		        filepath = ['--model',  'mlp', '--camera', 'off', '--param1', str(i), '--param2', str(1), '--eval','n']
+		        totalError=totalError+main(filepath,samples, labels)
+
+            per = totalError/reps
+            print "nh:%i; error:%f"%(i,per)
+            err.append([per, i])
+            #print "nh1=%i: nh2:%i error:%f "%(i, j, 100-per)
+    numpy.save('err_mlp5_all.npy', err)
+    print sorted(err)[0:20]
