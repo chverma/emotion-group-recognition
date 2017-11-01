@@ -1,3 +1,9 @@
 *.pyc
 experiment/*
 models/SVM/*
+*.png
+*.npy
+*.log
+*.out
+*.txt
+*.bak
