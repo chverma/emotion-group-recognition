@@ -2,7 +2,7 @@
 
 ###ENRTRAR ACI http://www.shervinemami.info/faceRecognition.html
 '''
-     
+
 '''
 
 # built-in modules
@@ -32,6 +32,10 @@ import utils.defaults as defaults
 from scripts.preprocess.drawPointsAndLines import drawPointsAndLines as drawPointsAndLines
 indx=None
 cols=None
+maxSample = None
+minSample = None
+meanSample = None
+
 def predictFromCamera(model):
     win = dlib.image_window()
     ##predict from camera
@@ -39,7 +43,7 @@ def predictFromCamera(model):
     resp=0
 
     while True:
-        
+
         img=getCamFrame(True,camera)
         cv2.putText(img, defaults.emotions[resp], (10,50), cv2.FONT_HERSHEY_SIMPLEX,
             1, (255,255,255), 2, cv2.CV_AA)
@@ -51,6 +55,10 @@ def predictFromCamera(model):
         if obtained:
             significant_points = getAllPoints(landmark)
             distance_between_points = getProcessedDistances(significant_points, defaults.use_log)
+
+            print "dist1",distance_between_points[0]
+            normalized = (distance_between_points-minSample)/(maxSample-minSample)
+
             #win.set_image(img)
             ##Print Points
             win.set_image(annotate_landmarks(img, numpy.matrix(landmark)))
@@ -59,8 +67,8 @@ def predictFromCamera(model):
             #print nDistance
             #print len(distance_between_points)
             if nDistance:
-                
-                ob = numpy.float32([distance_between_points])[:,indx]
+
+                ob = numpy.float32([normalized])[:,indx]
                 #print "1",len(ob[0])
                 if cols!=None:
                     ob = numpy.delete(ob, list(cols), 1)
@@ -68,7 +76,7 @@ def predictFromCamera(model):
                 resp = int(model.predict(ob)) # This predict does not work with Knearest
             #else:
             #    resp = int(model.predict(numpy.float32([distance_between_points])))
-            #print "response",defaults.emotions[resp]           
+            #print "response",defaults.emotions[resp]
 def main(parameters, samples, labels):
     import getopt
 
@@ -90,14 +98,14 @@ def main(parameters, samples, labels):
     args.setdefault('--eval', 'y')
     args.setdefault('--draw', 'n')
 
-    if '--draw' in args and 'y'==args['--draw']: 
-            drawPointsAndLines(defaults.model_feautures, '/home/chverma/UPV/TFG/data/faces/KDEF/happy/AF33HAS.JPG')
+    if '--draw' in args and 'y'==args['--draw']:
+            drawPointsAndLines('/home/chverma/UPV/TFG/pythonDlibLendmark/dataset/FeatureImportance/features_importanceKDEF.npy', '/home/chverma/UPV/TFG/data/faces/KDEF/fear/AM20AFS.JPG')
             exit()
     Model = models[args['--model']]
-    
+
     model = Model(args['--param1'], args['--param2'])
     if args['--model']=='svm':
-        ''' 
+        '''
         #http://docs.opencv.org/2.4/modules/ml/doc/support_vector_machines.html#cvsvmparams-cvsvmparams
         model.set_params(dict( kernel_type = cv2.SVM_RBF,
                             svm_type = cv2.SVM_NU_SVC,
@@ -107,7 +115,7 @@ def main(parameters, samples, labels):
         #POLY: degree = 1, NU_SVC: nu=0.3
         '''
         model.set_params(None)
-         
+
     samples_train=None
     labels_train=None
     samples_test=None
@@ -120,18 +128,18 @@ def main(parameters, samples, labels):
         samples_train, labels_train, samples_test, labels_test = loadData().shuffleData(samples, labels)
     else:
         samples_train, labels_train, samples_test, labels_test  = loadData().shuffleData(samples, labels)
-        
+
     if '--load' in args:
         fn = args['--load']
-        #print 'loading model from %s ...' % fn
+        print 'loading model from %s ...' % fn
         model.load(fn)
     else:
         t0 = time.time()
-        #print 'training %s ...' % Model.__name__
+        print 'training %s ...' % Model.__name__
         model.train(samples_train, labels_train)
         #print "time_training:",time.time()-t0
-    #print 'testing...'
-    #print 'predicting train'
+    print 'testing...'
+    print 'predicting train'
     train_rate = numpy.mean(model.predict(samples_train) != labels_train)
     #print 'predicting test'
     test_rate  = numpy.mean(model.predict(samples_test) != labels_test)
@@ -139,7 +147,7 @@ def main(parameters, samples, labels):
         if args['--eval']=='y':
             print 'train error: %f  test error: %f' % (train_rate*100, test_rate*100)
             return model.evaluate(samples_test, labels_test)
-    
+
     if '--save' in args:
         fn = args['--save']
         #print 'saving model to %s ...' % fn
@@ -147,17 +155,25 @@ def main(parameters, samples, labels):
 
     if '--camera' in args:
         fn = args['--camera']
-        if fn=='on': 
+        if fn=='on':
             predictFromCamera(model)
-            
+
     return test_rate*100
-            
+
 if __name__ == '__main__':
     import sys
     #print 'loading images from data file: npy'
     #If not exists, pass null
 
     samples = numpy.load(defaults.file_dataset)
+    maxSample = numpy.max(samples,axis=0)
+    minSample = numpy.min(samples, axis=0)
+    meanSample = numpy.mean(samples, axis=0)
+
+    normalized = (samples-minSample)/(maxSample-minSample)
+
+    samples = normalized
+
     labels = numpy.load(defaults.file_labels)
     indx = numpy.load(defaults.model_feautures)
     nInd=len(indx)*0.4
@@ -179,6 +195,3 @@ if __name__ == '__main__':
     #print("n_samples: %d" % len(labels_train))
     #print("n_test: %d" % len(labels_test))
     main(sys.argv[1:], samples, labels)
-    
-        
-    
