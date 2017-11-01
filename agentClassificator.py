@@ -36,7 +36,7 @@ print "Training models with %d features" % (len(samples_train))
 modelMLP = webModel.webModel('mlp', samples_train, labels_train)
 
 # KNEAREST model
-# modelKNN = webModel.webModel('knn',samples_train, labels_train)
+# modelKNN = webModel.webModel('knn', samples_train, labels_train)
 
 # RTREES model
 # modelRTrees = webModel.webModel('rtrees',samples_train, labels_train)
@@ -70,7 +70,6 @@ class Classificator(spade.Agent.Agent):
 
             if self.msg:
                 t0 = datetime.datetime.now()
-                print "ENTRE pero falla\n<<%s>>" % (self.msg.getContent())
                 try:
                     # Try to recompose from string to string that can be passed to numpy
                     content = str(self.msg.getContent())\
@@ -97,12 +96,11 @@ class Classificator(spade.Agent.Agent):
                     resp = defaults.emotions[indxEmo]
                 else:
                     resp = 'No lendmark :('
-                # Put the content to reply and send the message
+                # Put the response to reply and send the message
                 rep.setContent(resp)
                 self.myAgent.send(rep)
-
                 t1 = datetime.datetime.now()
-                print "Sended: %s in %f seconds" % (resp, (t1-t0))
+                print "Sended: %s in  %d microseconds" % (resp, (t1-t0).microseconds)
             else:
                 print "No messages"
 
