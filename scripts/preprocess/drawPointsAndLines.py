@@ -26,9 +26,9 @@ def drawPointsAndLines(name_features_npy,name_imgfile):
                     totalDist.append([i,d])
             #features = numpy.load('features_importance.npy')
             features = numpy.load(name_features_npy)
-            nfea = len(features)*0.5
+            nfea = len(features)*0.4
             features=features[0:nfea]
-            
+
             dist=[]
             for f in features:
                 dist.append([totalDist[f][0] ,totalDist[f][1] ])
@@ -40,6 +40,7 @@ def drawPointsAndLines(name_features_npy,name_imgfile):
             #dlib.hit_enter_to_continue()
             im = annotate_distances(img, numpy.matrix(landmark), dist)
             stri= 'Distances%i.png'%(nfea)
+            stri= 'Distances%i_FE.png'%(nfea)
             cv2.imwrite(stri,im)
             win.set_image(im)
 

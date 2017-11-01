@@ -77,7 +77,7 @@ def getRawDistance(significant_points):
         return (((b[0]-a[0])**2) + ((b[1]-a[1])**2))**(0.5)
 
     def computeManhattanDistance(a, b):
-        return (((b[0]-a[0])**2) + ((b[1]-a[1])**2))**(0.5)
+        return abs(b[0]-a[0]) + abs(b[1]-a[1])
 
     for i in xrange(len(significant_points)):
         dreta = i+1

@@ -25,61 +25,113 @@ from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 import numpy
 import utils.defaults as defaults
+from mpl_toolkits.mplot3d import axes3d, Axes3D #<-- Note the capitalization!
 
-samples_train = numpy.load('samples_train.npy')
-labels_train = numpy.load('labels_train.npy')
-samples_test = numpy.load('samples_test.npy')
-labels_test = numpy.load('labels_test.npy')
-X=numpy.load(defaults.file_dataset)
-y=numpy.load(defaults.file_labels)
-print "len(X)", len(X), "len(X[0])", len(X[0]), X[0]
-print "len(y)", len(y)
+
+#samples_test = numpy.load('samples_test.npy')
+#labels_test = numpy.load('labels_test.npy')
+Xunion=numpy.load(defaults.union_1318_nolog)
+Yunion=numpy.load(defaults.union_labels_1318_nolog)
+Xkdef  = numpy.load(defaults.kdef_nolog_1318)
+Ykdef  = numpy.load(defaults.kdef_labels_nolog_1318)
+
+indx = numpy.load('features.npy')
+Xunion=Xunion[:,indx]
+Xkdef=Xkdef[:,indx]
+itemindex = numpy.where(Xunion==0)
+itemindex2 = numpy.where(Xkdef==0)
+cols = set(itemindex[1])
+cols2 = set(itemindex2[1])
+print cols
+print cols2
+
+#X= numpy.delete(X, list(cols), 1)
 
 pca = PCA(n_components=3)
-X_r = pca.fit(X).transform(X)
+XPCA = pca.fit(Xunion).transform(Xunion)
 
-lda = LinearDiscriminantAnalysis(n_components=8, solver='eigen')
-X_proj_train = lda.fit(X, y).transform(X)
-X_proj_test = lda.transform(samples_test)
+lda = LinearDiscriminantAnalysis(n_components=32)
+XLDA = lda.fit(Xunion, Yunion).transform(Xunion)
+XldaKdef = lda.transform(Xkdef)
 
-print "X_proj_train", len(X_proj_train), len(X_proj_train[0])
-print "X_proj_test", len(X_proj_test), len(X_proj_test[0])
-numpy.save('wlda_train.npy', X_proj_train)
-numpy.save('wlda_test.npy', X_proj_test)
+#numpy.save('wlda_train.npy', X_proj_train)
+#numpy.save('wlda_test.npy', X_proj_test)
 
-#X_r3 = X_r2*X'
 # Percentage of variance explained for each components
-print 'explained variance ratio (first 3 components): %s \n %s'%( str(pca.explained_variance_ratio_) , str(lda.explained_variance_ratio_))
+print 'explained pca variance ratio: %s '%( str(pca.explained_variance_ratio_))
+#print 'explained variance ratio (first 3 components): %s '%( str(lda.explained_variance_ratio_)) 
 
+### LDA KDEF
+figK = plt.figure()
+axK = figK.gca(projection='3d')
 
-
-plt.figure()
 for c, i, target_name in zip("rgbkcm", [0, 1, 2,3,4,5], defaults.emotions):
-    plt.scatter(X_r[y == i, 0], X_r[y == i, 1], c=c, label=target_name)
+    axK.scatter(XldaKdef[Ykdef == i, 0], XldaKdef[Ykdef == i, 1], XldaKdef[Ykdef == i, 2],zdir='y',c=c, label=target_name)
 plt.legend()
-plt.title('PCA of emotion dataset')
 
+axK.legend()
+#axK.set_xlim3d(0, 1)
+#axK.set_ylim3d(0, 1)
+#axK.set_zlim3d(0, 1)
+axK.set_title("LDA 3D 1318 distancies")
+axK.set_xlabel("primera dimensio")
+axK.set_ylabel("segona dimensio")
+axK.set_zlabel("tercera dimensio")
+
+################################################################################
+################### LDA 
+## 2D
 plt.figure()
 for c, i, target_name in zip("rgbkcm", [0, 1, 2,3,4,5], defaults.emotions):
-    plt.scatter(X_proj_train[y == i, 0], X_proj_train[y == i, 1], c=c, label=target_name)
+    plt.scatter(XLDA[Yunion == i, 0], XLDA[Yunion == i, 1], c=c, label=target_name)
 plt.legend()
 plt.title('LDA of emotion dataset')
 
-
-
-
-
-from mpl_toolkits.mplot3d import axes3d, Axes3D #<-- Note the capitalization! 
+## 3D
 fig = plt.figure()
 ax = fig.gca(projection='3d')
 
 for c, i, target_name in zip("rgbkcm", [0, 1, 2,3,4,5], defaults.emotions):
-    ax.scatter(X_proj_train[y == i, 0], X_proj_train[y == i, 1], X_proj_train[y == i, 2],zdir='y',c=c, label=target_name)
+    ax.scatter(XLDA[Yunion == i, 0], XLDA[Yunion == i, 1], XLDA[Yunion == i, 2],zdir='y',c=c, label=target_name)
 plt.legend()
 
 ax.legend()
 #ax.set_xlim3d(0, 1)
 #ax.set_ylim3d(0, 1)
 #ax.set_zlim3d(0, 1)
+ax.set_title("LDA 3D 1318 distancies")
+ax.set_xlabel("primera dimensio")
+ax.set_ylabel("segona dimensio")
+ax.set_zlabel("tercera dimensio")
+#plt.show()
+################################################################################
+################### PCA 
+
+## 2D
+plt.figure()
+for c, i, target_name in zip("rgbkcm", [0, 1, 2,3,4,5], defaults.emotions):
+    plt.scatter(XPCA[Yunion == i, 0], XPCA[Yunion == i, 1], c=c, label=target_name)
+plt.legend()
+plt.title('PCA of emotion dataset')
+
+##PCA 3D
+fig1 = plt.figure()
+ax1 = fig.gca(projection='3d')
+
+for c, i, target_name in zip("rgbkcm", [0, 1, 2,3,4,5], defaults.emotions):
+    ax1.scatter(XPCA[Yunion == i, 0], XPCA[Yunion == i, 1], XPCA[Yunion == i, 2],zdir='y',c=c, label=target_name)
+plt.legend()
+
+ax1.legend()
+#ax1.set_xlim3d(0, 1)
+#ax1.set_ylim3d(0, 1)
+#ax1.set_zlim3d(0, 1)
+ax1.set_title("PCA 3D 1318 distancies")
+ax1.set_xlabel("primera dimensio")
+ax1.set_ylabel("segona dimensio")
+ax1.set_zlabel("tercera dimensio")
 
 plt.show()
+
+
+

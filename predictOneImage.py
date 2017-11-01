@@ -4,9 +4,8 @@ import sys
 host = '127.0.0.1'
 port = 8008
 
-rootFiles=  '/home/chverma/UPV/TFG/myapp/cameraCaptureWeb/uploads/'
+rootFiles = '/home/chverma/UPV/TFG/myapp/cameraCaptureWeb/public/uploads/'
 
+webModel = webModel('load', 'mlp')
 
-webModel = webModel()
-
-print defaults.emotions[webModel.predictImage(rootFiles+str(sys.argv[1]))]
+print defaults.emotions[webModel.predictFile(rootFiles+str(sys.argv[1]))]

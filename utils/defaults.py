@@ -1,6 +1,6 @@
 '''DEFAULTS'''
 dim = 2278  # because I use 12 distances
-dataset = 'UNION'  # JAFFE, KDEF, UNION, CAFE
+dataset = 'UNION'  # JAFFE, KDEF, UNION [is not Union is my dataset], CAFE
 data_path = '/home/chverma/UPV/TFG/data/'
 root_dir = '/home/chverma/UPV/TFG/pythonDlibLendmark/'
 emotions = ["happy", "neutral", "disgust", "fear", "surprised", "sad", "angry"]
