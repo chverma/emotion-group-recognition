@@ -16,7 +16,6 @@ import Image
 from loaddata.LoadAndShuffleData import LoadAndShuffleData as loadData
 import utils.defaults as defaults
 import cv
-import utils.defaults as defaults
 import sys
 import json
 # Import config
