@@ -38,3 +38,14 @@ class Boost(StatModel):
         print confusion
         print
         return confusion
+
+    def getVotes(self, samples):
+        new_samples = self.unroll_samples(samples)
+        pred = np.array( [self.model.predict(s,returnSum = True) for s in new_samples] )
+        pred = pred.reshape(-1, defaults.CLASS_N).argmax(1)
+        print pred
+        emm=[0]*7
+        for i in xrange(7):
+            emm[i]=len(pred[pred==i])
+        print emm
+        return pred
