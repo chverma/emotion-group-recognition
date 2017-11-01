@@ -1,12 +1,3 @@
-##################################
-#   EVENTS                                                                #
-##################################
-'''
-This is an example about how to use messages (events)
-to trigger the execution of a behaviour (EventBehaviour)
-'''
-host = "91.134.135.40"
-#host  = '127.0.0.1'
 import os
 import io
 import sys
@@ -23,108 +14,130 @@ import Image
 from loaddata.LoadAndShuffleData import LoadAndShuffleData as loadData
 import utils.defaults as defaults
 import cv
-samples_train, labels_train, samples_test, labels_test  = loadData().shuffleData(  numpy.load(defaults.file_dataset), numpy.load(defaults.file_labels))
-
-samples_train = numpy.vstack((samples_train,samples_test))
-labels_train = numpy.hstack((labels_train,labels_test))
-
-#SVMModels
-modelSVM_SVC = webModel.webModel('svm_svc',samples_train, labels_train)
-modelSVM_NU_SVC = webModel.webModel('svm_nu_svc',samples_train, labels_train)
-# MLP models
-modelMLP = webModel.webModel('mlp',samples_train, labels_train)
-# KNEAREST models
-modelKNN = webModel.webModel('knn',samples_train, labels_train)
-# RTREES models
-modelRTrees = webModel.webModel('rtrees',samples_train, labels_train)
-
-models = [modelSVM_SVC, modelSVM_NU_SVC, modelMLP, modelKNN, modelRTrees]
-
-
 import utils.defaults as defaults
+import sys
+
+# Define the host server that contains a running spade instance to connect it as an agent
+host = '192.168.0.2'
+samples_train, labels_train, samples_test, labels_test = loadData().shuffleData(
+    numpy.load(defaults.file_dataset),
+    numpy.load(defaults.file_labels)
+)
+
+samples_train = numpy.vstack((samples_train, samples_test))
+labels_train = numpy.hstack((labels_train, labels_test))
+print "Training models with %d features" % (len(samples_train))
+# Model definition and training
+# SVMModels
+modelSVM_SVC = webModel.webModel('svm_svc', samples_train, labels_train)
+# modelSVM_NU_SVC = webModel.webModel('svm_nu_svc',samples_train, labels_train)
+
+# MLP model
+modelMLP = webModel.webModel('mlp', samples_train, labels_train)
+
+# KNEAREST model
+# modelKNN = webModel.webModel('knn',samples_train, labels_train)
+
+# RTREES model
+# modelRTrees = webModel.webModel('rtrees',samples_train, labels_train)
+print "Trained models"
+# Put the trained model in that list in order to create an agent for each model
+# models = [modelSVM_SVC, modelSVM_NU_SVC, modelMLP, modelKNN, modelRTrees]
+models = [modelMLP]
+
+
 class Classificator(spade.Agent.Agent):
-   
     class RecvMsgBehav(spade.Behaviour.Behaviour):
         def onStart(self):
             print "Starting behaviour . . ."
-            ##Register agent model on coordinator
+            # Request login to coordinator agent onStart event
             msg = spade.ACLMessage.ACLMessage()
             msg.setPerformative("inform")
             msg.setOntology("login-please")
-            msg.addReceiver(spade.AID.aid("coordinator@"+host,["xmpp://coordinator@"+host]))
+            msg.addReceiver(spade.AID.aid("coordinator@"+host, ["xmpp://coordinator@"+host]))
             msg.setContent('')
             self.myAgent.send(msg)
             print "Sended login!"
-            
+
         def _process(self):
-            print "waiting messages..."
+            # Wait for messages
+            print "Waiting messages ..."
             self.msg = None
             try:
                 self.msg = self._receive(block=True)
+            except Exception:
+                print "just pException"
 
-            except Exception: 
-                 print "just pException"
-            
             if self.msg:
-                t0=datetime.datetime.now()
-                print "ENTRE pero falla\n<<%s>>"%(self.msg.getContent())
+                t0 = datetime.datetime.now()
+                print "ENTRE pero falla\n<<%s>>" % (self.msg.getContent())
                 try:
-                    content = str(self.msg.getContent()).replace('[', '').replace(']', '').replace('  ', ',').replace(',,,,',',').replace(',,',',').replace(' ','').replace('\n','')
-                except Exception: 
+                    # Try to recompose from string to string that can be passed to numpy
+                    content = str(self.msg.getContent())
+                    .replace('[', '')
+                    .replace(']', '')
+                    .replace('  ', ',')
+                    .replace(',,,,', ',')
+                    .replace(',,', ',')
+                    .replace(' ', '')
+                    .replace('\n', '')
+                except Exception:
                     print "just pException2"
-                print "content '%s'"%(content)
+                # Cast string to numpy array. It defines the distances computed by Coordinator agent.
                 distances = numpy.fromstring(content, dtype=numpy.float32, sep=',')
 
+                # Build the reply to the Coordinator
                 rep = self.msg.createReply()
                 rep.setOntology("result-predict")
-                
-                print "Predicting..."
+
+                # Predict the distances array
                 indxEmo = self.myAgent.model.predictFromModel(distances)
-                print "Predicted..."
-                if indxEmo>-1:
+                # Try to get the emotion string by index of that class
+                if indxEmo > -1:
                     resp = defaults.emotions[indxEmo]
                 else:
                     resp = 'No lendmark :('
-                #print "Received message6..."
+                # Put the content to reply and send the message
                 rep.setContent(resp)
                 self.myAgent.send(rep)
-                t1=datetime.datetime.now()	
-                print "Sended: ",resp, "time:", (t1-t0)
+
+                t1 = datetime.datetime.now()
+                print "Sended: %s in %f seconds" % (resp, (t1-t0))
             else:
                 print "No messages"
-            
-    
+
     def _setup(self):
         # Create the template for the EventBehaviour: a message from myself
         template = spade.Behaviour.ACLTemplate()
         template.setOntology("predict-array")
         t = spade.Behaviour.MessageTemplate(template)
         # Add the EventBehaviour with its template
-        self.addBehaviour(self.RecvMsgBehav(),t)
-        
-        # Add the sender behaviour
-        #self.addBehaviour(self.SendMsgBehav())
+        self.addBehaviour(self.RecvMsgBehav(), t)
 
-    
-modelAgents = []
 
-for n in range(len(models)):
-    agent = "classificator"+str(n)+"@"+host
-    classificator = Classificator(agent,"secret")
-    classificator.model = models[n]
-    modelAgents.append(classificator)
-    classificator.start()
-    print "Launched classificator "+str(n)
+def main():
+    modelAgents = []
 
-alive =True
-while alive:
-	try:
-	    time.sleep(1)
-	except KeyboardInterrupt:
-	    alive=False
+    for n in range(len(models)):
+        agent = "classificator"+str(n)+"@"+host
+        classificator = Classificator(agent, "secret")
+        classificator.model = models[n]
+        modelAgents.append(classificator)
+        classificator.start()
+        print "Launched classificator "+str(n)
 
-for b in modelAgents:
-    b.stop()
-        
-import sys
-sys.exit(0)
+    alive = True
+    while alive:
+        try:
+            time.sleep(1)
+        except KeyboardInterrupt:
+            alive = False
+
+    for b in modelAgents:
+        b.stop()
+
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()
