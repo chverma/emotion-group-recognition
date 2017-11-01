@@ -29,7 +29,7 @@ labels_train = numpy.hstack((labels_train, labels_test))
 print "Training models with %d features" % (len(samples_train))
 # Model definition and training
 # SVMModels
-modelSVM_SVC = webModel.webModel('svm_svc', samples_train, labels_train)
+# modelSVM_SVC = webModel.webModel('svm_svc', samples_train, labels_train)
 # modelSVM_NU_SVC = webModel.webModel('svm_nu_svc',samples_train, labels_train)
 
 # MLP model
