@@ -73,14 +73,14 @@ class Classificator(spade.Agent.Agent):
                 print "ENTRE pero falla\n<<%s>>" % (self.msg.getContent())
                 try:
                     # Try to recompose from string to string that can be passed to numpy
-                    content = str(self.msg.getContent())
-                    .replace('[', '')
-                    .replace(']', '')
-                    .replace('  ', ',')
-                    .replace(',,,,', ',')
-                    .replace(',,', ',')
-                    .replace(' ', '')
-                    .replace('\n', '')
+                    content = str(self.msg.getContent())\
+                        .replace('[', '')\
+                        .replace(']', '')\
+                        .replace('  ', ',')\
+                        .replace(',,,,', ',')\
+                        .replace(',,', ',')\
+                        .replace(' ', '')\
+                        .replace('\n', '')
                 except Exception:
                     print "just pException2"
                 # Cast string to numpy array. It defines the distances computed by Coordinator agent.
