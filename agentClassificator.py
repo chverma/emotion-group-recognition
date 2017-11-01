@@ -18,9 +18,14 @@ import utils.defaults as defaults
 import cv
 import utils.defaults as defaults
 import sys
+import json
+# Import config
+with open('config.json') as data_file:
+    localConfig = json.load(data_file)
 
-# Define the host server that contains a running spade instance to connect it as an agent
-host = '192.168.0.2'
+# Define the IP server that contains a running spade instance to connect it as an agent
+spadeServerIP = localConfig['spade']['ip_address']
+
 samples_train, labels_train, samples_test, labels_test = loadData().shuffleData(
     numpy.load(defaults.file_dataset),
     numpy.load(defaults.file_labels)
@@ -56,7 +61,7 @@ class Classificator(spade.Agent.Agent):
             msg = spade.ACLMessage.ACLMessage()
             msg.setPerformative("inform")
             msg.setOntology("login-please")
-            msg.addReceiver(spade.AID.aid("coordinator@"+host, ["xmpp://coordinator@"+host]))
+            msg.addReceiver(spade.AID.aid("coordinator@"+spadeServerIP, ["xmpp://coordinator@"+spadeServerIP]))
             msg.setContent('')
             self.myAgent.send(msg)
             print "Sended login!"
@@ -119,7 +124,7 @@ def main():
     modelAgents = []
 
     for n in range(len(models)):
-        agent = "classificator"+str(n)+"@"+host
+        agent = "classificator"+str(n)+"@"+spadeServerIP
         classificator = Classificator(agent, "secret")
         classificator.model = models[n]
         modelAgents.append(classificator)

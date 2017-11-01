@@ -14,8 +14,13 @@ from loaddata.processImage import process_image_matrix as process_image_matrix
 import cv
 from collections import defaultdict
 import utils.defaults as defaults
-# Define the host server that contains a running spade instance to connect it as an agent
-host = '192.168.0.2'
+import json
+# Import config
+with open('config.json') as data_file:
+    localConfig = json.load(data_file)
+
+# Define the IP server that contains a running spade instance to connect it as an agent
+spadeServerIP = localConfig['spade']['ip_address']
 
 
 class Coordinator(spade.Agent.Agent):
@@ -114,7 +119,7 @@ class Coordinator(spade.Agent.Agent):
                     msg = spade.ACLMessage.ACLMessage()
                     msg.setPerformative("inform")
                     msg.setOntology("response-predict")
-                    msg.addReceiver(spade.AID.aid("camera@"+host, ["xmpp://camera@"+host]))
+                    msg.addReceiver(spade.AID.aid("camera@"+spadeServerIP, ["xmpp://camera@"+spadeServerIP]))
                     msg.setContent(winner)
                     self.myAgent.send(msg)
                     t1 = datetime.datetime.now()
@@ -162,7 +167,7 @@ class Coordinator(spade.Agent.Agent):
 
 
 def main():
-    a = Coordinator("coordinator@"+host, "secret")
+    a = Coordinator("coordinator@"+spadeServerIP, "secret")
     a.classificators = []
     a.start()
 

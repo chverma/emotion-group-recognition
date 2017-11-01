@@ -10,9 +10,15 @@ import cv2
 import datetime
 import base64
 import pyttsx
+import json
 sys.path.append('..')
 
-host = "192.168.0.2"
+# Import config
+with open('config.json') as data_file:
+    localConfig = json.load(data_file)
+
+# Define the IP server that contains a running spade instance to connect it as an agent
+spadeServerIP = localConfig['spade']['ip_address']
 
 
 class Sender(spade.Agent.Agent):
@@ -37,7 +43,7 @@ class Sender(spade.Agent.Agent):
             msg = spade.ACLMessage.ACLMessage()
             msg.setPerformative("inform")
             msg.setOntology("predict-image")
-            msg.addReceiver(spade.AID.aid("coordinator@"+host, ["xmpp://coordinator@"+host]))
+            msg.addReceiver(spade.AID.aid("coordinator@"+spadeServerIP, ["xmpp://coordinator@"+spadeServerIP]))
 
             # Example: how to predict from image
             # img = cv2.imread("agents/46.png",0)
@@ -82,7 +88,7 @@ class Sender(spade.Agent.Agent):
 
 
 def main():
-    a = Sender("camera@"+host, "secret")
+    a = Sender("camera@"+spadeServerIP, "secret")
 
     time.sleep(1)
     a.start()
