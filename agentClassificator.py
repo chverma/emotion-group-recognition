@@ -59,9 +59,9 @@ class Classificator(spade.Agent.Agent):
             # Request login to coordinator agent onStart event
             msg = spade.ACLMessage.ACLMessage()
             msg.setPerformative("inform")
-            msg.setOntology("login-please")
+            msg.setOntology("login")
             msg.addReceiver(spade.AID.aid("coordinator@"+spadeServerIP, ["xmpp://coordinator@"+spadeServerIP]))
-            msg.setContent('')
+            msg.setContent('classificator')
             self.myAgent.send(msg)
             print "Sended login!"
 
@@ -93,7 +93,7 @@ class Classificator(spade.Agent.Agent):
 
                 # Build the reply to the Coordinator
                 rep = self.msg.createReply()
-                rep.setOntology("result-predict")
+                rep.setOntology("emotion")
 
                 # Predict the distances array
                 indxEmo = self.myAgent.model.predictFromModel(distances)
@@ -113,7 +113,7 @@ class Classificator(spade.Agent.Agent):
     def _setup(self):
         # Create the template for the EventBehaviour: a message from myself
         template = spade.Behaviour.ACLTemplate()
-        template.setOntology("predict-array")
+        template.setOntology("distances")
         t = spade.Behaviour.MessageTemplate(template)
         # Add the EventBehaviour with its template
         self.addBehaviour(self.RecvMsgBehav(), t)

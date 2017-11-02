@@ -30,13 +30,16 @@ def plot_data(data):
     #plt.savefig(emotion+".png")
     plt.show()
 
-def getCamFrame(color,camera):
-    retval,frame=camera.read()
-    if not color:
-        frame=cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+def getCamFrame(toRGB, camera):
+    retval, frame = camera.read()
+    if toRGB:
+        # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        pass
     else:
-        frame=cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
-    #frame=numpy.rot90(frame)
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    # frame=numpy.rot90(frame)
     return frame
 
 def get_landmarks(im):

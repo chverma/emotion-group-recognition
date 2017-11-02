@@ -11,6 +11,8 @@ import datetime
 import base64
 import pyttsx
 import json
+import hashlib
+
 sys.path.append('..')
 
 # Import config
@@ -19,18 +21,19 @@ with open('config.json') as data_file:
 
 # Define the IP server that contains a running spade instance to connect it as an agent
 spadeServerIP = localConfig['spade']['ip_address']
+RGBimages = localConfig['images']['RGB']
 
 
 class Sender(spade.Agent.Agent):
-    class SendMsgBehav(spade.Behaviour.PeriodicBehaviour):
+    class SendImgBehav(spade.Behaviour.PeriodicBehaviour):
         """
         This behaviour sends an image message to the coordinator to request the facial emotion
         """
         def predictFromCamera(self):
-            return getCamFrame(False, self.camera)
+            return getCamFrame(toRGB=RGBimages, camera=self.camera)
 
         def onStart(self):
-            print "Starting SendMsgBehav behaviour . . ."
+            print "Starting SendImgBehav behaviour . . ."
             # self.myAgent.engine.say('Hola, soc el inspector gadjet.')
             # self.myAgent.engine.say('Voy a ver que tal tu cara.')
             # self.myAgent.engine.runAndWait()
@@ -42,25 +45,36 @@ class Sender(spade.Agent.Agent):
             self.counter = self.counter + 1
             msg = spade.ACLMessage.ACLMessage()
             msg.setPerformative("inform")
-            msg.setOntology("predict-image")
+            msg.setOntology("img")
             msg.addReceiver(spade.AID.aid("coordinator@"+spadeServerIP, ["xmpp://coordinator@"+spadeServerIP]))
 
             # Example: how to predict from image
             # img = cv2.imread("agents/46.png",0)
             # img = base64.b64encode(cv2.imread("../data/faces/UNION/neutral/23.png",0))
-            img = base64.b64encode(self.predictFromCamera())
+            npImg = self.predictFromCamera()
+            base64img = base64.b64encode(npImg)
+            try:
+                print "dtype: ", npImg.dtype
+                print "shape: ", npImg.shape
+                print "strides: ", npImg.strides
+                print "type: ", type(npImg)
+                print "sha224Numpy", hashlib.sha224(npImg).hexdigest()
+                print "sha224base64", hashlib.sha224(base64img).hexdigest()
+                # cv2.imwrite("{}C.png".format(str(hashlib.sha224(npImg).hexdigest())), npImg)
+            except Exception as e:
+                print "ErrorType:", e
 
-            msg.setContent(img)
+            msg.setContent(base64img)
             self.myAgent.send(msg)
             print "Image sended!"
             self.myAgent.t0 = datetime.datetime.now()
 
-    class RecvMsgBehav(spade.Behaviour.Behaviour):
+    class RecvEmotionBehav(spade.Behaviour.Behaviour):
         """
         This EventBehaviour receives the response containing the facial emotion detection
         """
         def onStart(self):
-            print "Starting behaviour RecvMsgBehav. . ."
+            print "Starting behaviour RecvEmotionBehav. . ."
             self.counter = 0
 
         def _process(self):
@@ -78,12 +92,12 @@ class Sender(spade.Agent.Agent):
     def _setup(self):
         # Create the template for the EventBehaviour: a message from myself
         template = spade.Behaviour.ACLTemplate()
-        template.setOntology("response-predict")
+        template.setOntology("emotion")
         t = spade.Behaviour.MessageTemplate(template)
 
-        self.addBehaviour(self.RecvMsgBehav(), t)
+        self.addBehaviour(self.RecvEmotionBehav(), t)
         # Add the sender behaviour
-        b = self.SendMsgBehav(1)
+        b = self.SendImgBehav(1)
         self.addBehaviour(b, None)
 
 
