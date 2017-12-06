@@ -26,11 +26,17 @@ import json
 with open('../config.json') as data_file:
     localConfig = json.load(data_file)
 app = Flask(__name__)
+queue = None
 
 
 class Queue:
-    def __init__(self, maxElem=5):
-        self.load()
+    def __init__(self, maxElem=20, cleared=False):
+        if not cleared:
+            self.load()
+        else:
+            self.facesList = []
+            self.namesList = []
+
         self.maxElem = maxElem
 
     def load(self):
@@ -77,7 +83,12 @@ class Queue:
         return len(self.namesList)
 
 
-queue = Queue(localConfig['people']['max_number'])
+def initQueue(cleared):
+    global queue
+    queue = Queue(localConfig['people']['max_number'], cleared)
+
+
+initQueue(False)
 
 
 def allowed_file(filename):
@@ -124,6 +135,8 @@ def upload_image():
     <body>
         <title>Who are in that picture?</title>
         <h1>Upload a picture and see who are in that picture!</h1>
+        <h4>Now we have %d face encodings</h4>
+        <p>%s</p>
         <form class="form-control" method="POST" enctype="multipart/form-data">
           <input class="form-inline" type="file" name="file">
           <div class="form-inline" >
@@ -133,7 +146,7 @@ def upload_image():
           <input class="btn btn-primary btn-lg form-inline" type="submit" value="Upload">
         </form>
     </body>
-    '''
+    ''' % (queue.getLength(), ', '.join(queue.getNames()))
 
 
 def detect_faces_in_image(file_stream, nameProvided):
@@ -180,6 +193,17 @@ def save_model():
     <!doctype html>
     <title>Save model</title>
     <h1>Model saved</h1>
+    '''
+
+
+@app.route('/clear', methods=['GET'])
+def clear_model():
+    initQueue(True)
+    # If no valid image file was uploaded, show the file upload form:
+    return '''
+    <!doctype html>
+    <title>Clear model</title>
+    <h1>Model cleared</h1>
     '''
 
 
