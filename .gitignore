@@ -9,3 +9,4 @@ models/SVM/*
 *.bak
 trash/*
 config.json
+models/*
