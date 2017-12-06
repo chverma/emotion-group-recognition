@@ -36,13 +36,16 @@ class Queue:
         else:
             self.facesList = []
             self.namesList = []
+            self.emotionList = []
 
         self.maxElem = maxElem
 
     def load(self):
         try:
             self.facesList = numpy.load(localConfig['people']['face_encodings'])
-            self.namesList = numpy.load(localConfig['people']['face_names'])
+            self.namesList = [x.lower() for x in numpy.load(localConfig['people']['face_names'])]
+            self.emotionList = ['No']*len(self.namesList)
+            print self.emotionList
         except Exception:
             self.facesList = []
             self.namesList = []
@@ -58,10 +61,12 @@ class Queue:
         if numElem == 0:
             self.facesList = numpy.array(elem)
             self.namesList = numpy.asarray([name])
+            self.emotionList = ['']
         elif self.maxElem > numElem:
             print type(self.namesList), type(name)
             self.facesList = numpy.append(self.facesList, elem, axis=0)
             self.namesList = numpy.append(self.namesList, [name], axis=0)
+            self.emotionList.append('')
         else:
             self.facesList[:-1] = self.facesList[1:]
             print type(self.facesList[-1])
@@ -73,6 +78,9 @@ class Queue:
             print type(name), name
             self.namesList[-1] = name
 
+            self.emotionList[:-1] = self.emotionList[1:]
+            self.emotionList[-1] = ''
+
     def getNames(self):
         return self.namesList
 
@@ -81,6 +89,18 @@ class Queue:
 
     def getLength(self):
         return len(self.namesList)
+
+    def getEmotions(self):
+        return self.emotionList
+
+    def setEmotion(self, name, emotion):
+        try:
+            x = self.namesList.index(name)
+            self.emotionList[x] = emotion
+            return name, emotion
+        except ValueError:
+            pass
+
 
 
 def initQueue(cleared):
@@ -94,6 +114,12 @@ initQueue(False)
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in localConfig['images']['allowed_ext']
+
+
+def adaptName(name, maxLen=9):
+    if len(name) >= maxLen:
+        return name[:maxLen]
+    return name
 
 
 @app.route('/checkIdentity', methods=['GET', 'POST'])
@@ -112,8 +138,8 @@ def upload_image():
 
         if file and allowed_file(file.filename):
             # The image file seems valid! Detect faces and return the result.
-            if 'name' in request.args:
-                nameProvided = request.args['name']
+            if 'name' in request.form:
+                nameProvided = request.form['name']
             else:
                 nameProvided = file.filename
 
@@ -127,6 +153,9 @@ def upload_image():
             return jsonify(result)
 
     # If no valid image file was uploaded, show the file upload form:
+    namesHeader = '<th scope="col">' + '</th><th scope="col">'.join(map(adaptName, queue.getNames())) + '</th>'
+    emotionValues = '<td>' + '</td><td>'.join(queue.getEmotions()) + '</td>'
+
     return '''
     <!doctype html>
     <head>
@@ -136,7 +165,15 @@ def upload_image():
         <title>Who are in that picture?</title>
         <h1>Upload a picture and see who are in that picture!</h1>
         <h4>Now we have %d face encodings</h4>
-        <p>%s</p>
+        <table class="table-bordered">
+            <tr>
+                %s
+            </tr>
+            <tr>
+                %s
+            </tr>
+        </table>
+
         <form class="form-control" method="POST" enctype="multipart/form-data">
           <input class="form-inline" type="file" name="file">
           <div class="form-inline" >
@@ -146,7 +183,7 @@ def upload_image():
           <input class="btn btn-primary btn-lg form-inline" type="submit" value="Upload">
         </form>
     </body>
-    ''' % (queue.getLength(), ', '.join(queue.getNames()))
+    ''' % (queue.getLength(), namesHeader, emotionValues)
 
 
 def detect_faces_in_image(file_stream, nameProvided):
@@ -205,6 +242,23 @@ def clear_model():
     <title>Clear model</title>
     <h1>Model cleared</h1>
     '''
+
+
+@app.route('/emotion', methods=['GET', 'POST'])
+def save_emotion():
+    global queue
+    print "We have %d stored faces" % queue.getLength()
+
+    name = None
+    emotion = None
+    if 'name' in request.args:
+        name = request.args['name']
+    if 'emotion' in request.args:
+        emotion = request.args['emotion']
+
+    print "set emotion",  name, emotion
+    queue.setEmotion(name.lower(), emotion)
+    return name + ' ' + emotion
 
 
 if __name__ == "__main__":

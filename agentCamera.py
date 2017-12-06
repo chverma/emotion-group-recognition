@@ -40,6 +40,12 @@ class Sender(spade.Agent.Agent):
             self.counter = 0
             self.camera = cv2.VideoCapture(0)
             self.resp = 0
+            msg = spade.ACLMessage.ACLMessage()
+            msg.setPerformative("inform")
+            msg.setOntology("login")
+            msg.addReceiver(spade.AID.aid("coordinator@"+spadeServerIP, ["xmpp://coordinator@"+spadeServerIP]))
+            msg.setContent('clients')
+            self.myAgent.send(msg)
 
         def _onTick(self):
             self.counter = self.counter + 1

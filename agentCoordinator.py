@@ -17,6 +17,7 @@ import utils.defaults as defaults
 import json
 import hashlib
 import requests
+import traceback
 # Import config
 with open('config.json') as data_file:
     localConfig = json.load(data_file)
@@ -43,11 +44,13 @@ class Coordinator(spade.Agent.Agent):
                 # Distribute matrix to all classificators
                 # Build the template message
                 msg = spade.ACLMessage.ACLMessage()
-                msg.setPerformative("inform")
+                if not personId:
+                    personId = 'No'
+                msg.setPerformative(personId)
                 msg.setOntology("distances")
                 # For each classificator agent send it the distances
                 for agent in self.myAgent.classificators:
-                    print "Sending computed distances of %s to %s" % (personId, str(agent))
+                    print "Sending computed distances of %s to %s" % (personId, agent.getName())
                     msg.addReceiver(agent)
                     print personId
                     msg.setContent(distances)
@@ -109,6 +112,11 @@ class Coordinator(spade.Agent.Agent):
             self.nResponses = 0
             self.currentResponses = []
 
+        def sendEmotionToFaceRecognitionServer(self, personId, emotion):
+            url = localConfig['face_recognizer_server']['emotion']
+            print "sending ", emotion, personId
+            r = requests.post(url, params={'name': personId, 'emotion': emotion})
+
         def _process(self):
             self.msg = None
             try:
@@ -118,41 +126,50 @@ class Coordinator(spade.Agent.Agent):
                 print "just pException"
 
             if self.msg:
+                print "RECEIVED FROM CLASSI"
                 t0 = datetime.datetime.now()
+                try:
+                    content = self.msg.getContent()
+                    personId = self.msg.getPerformative()
+                    print content
+                    resp = json.loads(content)
+                    print "-----------", resp['emotion']
+                    self.currentResponses.append(resp['emotion'])
 
-                resp = self.msg.getContent()
-                self.currentResponses.append(resp)
+                    # When it has all the results or timeout, send results to Camera agent
+                    if self.nResponses > self.maxResponses:
+                        d = defaultdict(int)
+                        for word in self.currentResponses:
+                            d[word] += 1
 
-                # When it has all the results or timeout, send results to Camera agent
-                if self.nResponses > self.maxResponses:
-                    d = defaultdict(int)
-                    for word in self.currentResponses:
-                        d[word] += 1
+                        maxVal = -1
+                        winner = -1
+                        for k in d.keys():
+                            if d[k] > maxVal:
+                                maxVal = d[k]
+                                winner = k
 
-                    maxVal = -1
-                    winner = -1
-                    for k in d.keys():
-                        if d[k] > maxVal:
-                            maxVal = d[k]
-                            winner = k
+                        print "Emotion winner: %s" % winner
 
-                    print "Emotion: %s" % winner
-
-                    # Build and send the emotion response to the source, the camera agent
-                    msg = spade.ACLMessage.ACLMessage()
-                    msg.setPerformative("inform")
-                    msg.setOntology("emotion")
-                    msg.addReceiver(self.myAgent.clients[0])
-                    msg.setContent(winner)
-                    self.myAgent.send(msg)
-                    del msg
-                    t1 = datetime.datetime.now()
-                    print "Sended to Camera agent: %s" % winner
-                    print "time:", (t1-t0)
-                    self.nResponses = 0
-                    self.currentResponses = []
-                else:
-                    self.nResponses = self.nResponses+1
+                        self.sendEmotionToFaceRecognitionServer(personId, winner)
+                        # Build and send the emotion response to the source, the camera agent
+                        msg = spade.ACLMessage.ACLMessage()
+                        msg.setPerformative("inform")
+                        msg.setOntology("emotion")
+                        msg.addReceiver(self.myAgent.clients[0])
+                        msg.setContent(winner)
+                        self.myAgent.send(msg)
+                        del msg
+                        t1 = datetime.datetime.now()
+                        print "Sended to Camera agent: %s" % winner
+                        print "time:", (t1-t0)
+                        self.nResponses = 0
+                        self.currentResponses = []
+                    else:
+                        self.nResponses = self.nResponses+1
+                except Exception as e:
+                    print "Bad emotion"
+                    print(traceback.format_exc())
             else:
                 print "No messages"
 
@@ -169,13 +186,17 @@ class Coordinator(spade.Agent.Agent):
 
             if self.msg:
                 s = self.msg.getSender()
-                print '%s has logged in' % (s)
+
                 if (self.msg.getContent() == 'classificator'):
-                    self.myAgent.classificators.append(s)
+                    if s not in self.myAgent.classificators:
+                        self.myAgent.classificators.append(s)
+                        print '%s has logged in' % (s.getName())
                 elif (self.msg.getContent() == 'identity'):
                     self.myAgent.identity.append(s)
+                    print '%s has logged in' % (s.getName())
                 elif (self.msg.getContent() == 'clients'):
                     self.myAgent.clients.append(s)
+                    print '%s has logged in' % (s.getName())
             else:
                 print "No messages"
 

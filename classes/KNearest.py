@@ -17,12 +17,14 @@ class KNearest(StatModel):
         self.model.train(samples, responses)
 
     def predict(self, samples):
+        print "predict"
         retval, results, neigh_resp, dists = self.model.find_nearest(samples, self.k)
+        print "predict1"
         return results.ravel()
 
     def evaluate(self, samples, labels):
         # resp =  numpy.float32( [self.model.predict(s) for s in samples])
-        resp = self.predict(samples)
+        resp = [int(i) for i in self.predict(samples)]
         err = (labels != resp).mean()
         print 'error: %.2f %%' % (err*100)
 

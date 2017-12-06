@@ -39,17 +39,18 @@ print "Training models with %d features" % (len(samples_train))
 # modelSVM_NU_SVC = webModel.webModel('svm_nu_svc',samples_train, labels_train)
 
 # MLP model
-modelMLP = webModel.webModel('mlp', samples_train, labels_train)
+# modelMLP = webModel.webModel('mlp', samples_train, labels_train)
 
 # KNEAREST model
-# modelKNN = webModel.webModel('knn', samples_train, labels_train)
+modelKNN = webModel.webModel('knn', samples_train, labels_train)
 
 # RTREES model
 # modelRTrees = webModel.webModel('rtrees',samples_train, labels_train)
 print "Trained models"
 # Put the trained model in that list in order to create an agent for each model
 # models = [modelSVM_SVC, modelSVM_NU_SVC, modelMLP, modelKNN, modelRTrees]
-models = [modelMLP]
+# models = [modelMLP]
+models = [modelKNN]
 
 
 class Classificator(spade.Agent.Agent):
@@ -59,15 +60,7 @@ class Classificator(spade.Agent.Agent):
     """
     class RecvMsgBehav(spade.Behaviour.Behaviour):
         def onStart(self):
-            print "Starting behaviour . . ."
-            # Request login to coordinator agent onStart event
-            msg = spade.ACLMessage.ACLMessage()
-            msg.setPerformative("inform")
-            msg.setOntology("login")
-            msg.addReceiver(spade.AID.aid("coordinator@"+spadeServerIP, ["xmpp://coordinator@"+spadeServerIP]))
-            msg.setContent('classificator')
-            self.myAgent.send(msg)
-            print "Sended login!"
+            pass
 
         def _process(self):
             # Wait for messages
@@ -90,15 +83,16 @@ class Classificator(spade.Agent.Agent):
                         .replace(',,', ',')\
                         .replace(' ', '')\
                         .replace('\n', '')
+
+                    personId = self.msg.getPerformative()
+
                 except Exception:
                     print "just pException2"
                 # Cast string to numpy array. It defines the distances computed by Coordinator agent.
                 distances = numpy.fromstring(content, dtype=numpy.float32, sep=',')
-
                 # Build the reply to the Coordinator
                 rep = self.msg.createReply()
                 rep.setOntology("emotion")
-
                 # Predict the distances array
                 indxEmo = self.myAgent.model.predictFromModel(distances)
                 # Try to get the emotion string by index of that class
@@ -107,12 +101,29 @@ class Classificator(spade.Agent.Agent):
                 else:
                     resp = 'No lendmark :('
                 # Put the response to reply and send the message
-                rep.setContent(resp)
+                msg = '{"personId":"%s", "emotion":"%s"}' % (personId, resp)
+                rep.setContent(msg)
                 self.myAgent.send(rep)
                 t1 = datetime.datetime.now()
-                print "Sended: %s in  %d microseconds" % (resp, (t1-t0).microseconds)
+                print "Sended: %s in  %d microseconds" % (msg, (t1-t0).microseconds)
             else:
                 print "No messages"
+
+    class SendLoginBehav(spade.Behaviour.PeriodicBehaviour):
+        """
+        This behaviour sends an image message to the coordinator to request the facial emotion
+        """
+
+        def _onTick(self):
+            # print "Send login . . ."
+            # Request login to coordinator agent onStart event
+            msg = spade.ACLMessage.ACLMessage()
+            msg.setPerformative("inform")
+            msg.setOntology("login")
+            msg.addReceiver(spade.AID.aid("coordinator@"+spadeServerIP, ["xmpp://coordinator@"+spadeServerIP]))
+            msg.setContent('classificator')
+            self.myAgent.send(msg)
+            # print "Sended login!"
 
     def _setup(self):
         # Create the template for the EventBehaviour: a message from myself
@@ -121,6 +132,8 @@ class Classificator(spade.Agent.Agent):
         t = spade.Behaviour.MessageTemplate(template)
         # Add the EventBehaviour with its template
         self.addBehaviour(self.RecvMsgBehav(), t)
+        b = self.SendLoginBehav(10)
+        self.addBehaviour(b, None)
 
 
 def main():
