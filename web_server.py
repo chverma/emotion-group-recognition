@@ -74,8 +74,6 @@ class Queue:
 queue = Queue(localConfig['people']['max_number'])
 
 
-
-
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -162,27 +160,6 @@ def save_model():
     <h1>Model saved</h1>
     '''
 
-def getData():
-    global queue
-    if queue is None:
-        try:
-            initialFaces = numpy.load("initialFaces.npy")  # [localConfig['people']['max_number']]
-            initialNames = numpy.load("initialNames.npy")  # [localConfig['people']['max_number']]
-
-        except Exception as e:
-            print e
-            # Load a sample picture and learn how to recognize it.
-            obama_image = face_recognition.load_image_file("/home/chverma/UPV/TFG/face_recognition/examples/obama.jpg")
-            obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
-
-            nata_image = face_recognition.load_image_file("/home/chverma/UPV/TFG/data/faces/chverma/neutral/web1461950635617.png")
-            nata_face_encoding = face_recognition.face_encodings(nata_image)[0]
-
-            chris_image = face_recognition.load_image_file("/home/chverma/UPV/TFG/data/faces/chverma/neutral/x11.png")
-            chris_face_encoding = face_recognition.face_encodings(chris_image)[0]
-
-            initialFaces = [obama_face_encoding, nata_face_encoding, chris_face_encoding]
-            initialNames = ["Obama", "Nata", "Christian"]
 
 def getDataMongo(query=None):
     client = MongoClient('localhost', 27017)
@@ -231,13 +208,13 @@ def check_mongo():
 
             return detect_faces_in_image(file, nameProvided)
 
-    print getData()[:]
     # If no valid image file was uploaded, show the file upload form:
     return '''
     <!doctype html>
     <title>Mongo check</title>
     <h1>Mongo check ok!</h1>
-    ''' + str(getData()[:])
+    '''
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5001, debug=True)
