@@ -24,24 +24,41 @@ with open('config.json') as data_file:
 # Define the IP server that contains a running spade instance to connect it as an agent
 spadeServerIP = localConfig['spade']['ip_address']
 RGBimages = localConfig['images']['RGB']
-from flask import send_file
+
+
 class Coordinator(spade.Agent.Agent):
     class RecvFromCameraAgent(spade.Behaviour.Behaviour):
-        def sendImgToPersonalIdentityAgent(self, msgStr):
-            '''
-                if len(self.myAgent.identity) > 0:
-                    msg = spade.ACLMessage.ACLMessage()
-                    print "Preparing sending"
-                    msg.setPerformative("inform")
-                    msg.setOntology("img")
-                    print "Preparing sending1", self.myAgent.identity
-                    msg.addReceiver(self.myAgent.identity[0])
-                    print "Preparing sending2"
-                    msg.setContent(msgStr)
-                    print "Preparing sending3"
+        def sendImgToFaceRecognitionServer(self, npArray):
+            try:
+                cv2.imwrite(localConfig['tmp']['face_to_recognizer'], npArray)
+                url = localConfig['face_recognizer_server']['url']
+                files = {'file': open(localConfig['tmp']['face_to_recognizer'], 'rb')}
+                r = requests.post(url, files=files)
+                return json.loads(r.text)
+            except Exception as e:
+                print "Error request:", e
+
+        def sendDistancesToEmotionRecognitionAgents(self, distances, personId):
+            if distances is not None:
+                # Distribute matrix to all classificators
+                # Build the template message
+                msg = spade.ACLMessage.ACLMessage()
+                msg.setPerformative("inform")
+                msg.setOntology("distances")
+                # For each classificator agent send it the distances
+                for agent in self.myAgent.classificators:
+                    print "Sending computed distances of %s to %s" % (personId, str(agent))
+                    msg.addReceiver(agent)
+                    print personId
+                    msg.setContent(distances)
                     self.myAgent.send(msg)
-                    print "Preparing sending4"
-            '''
+
+                t1 = datetime.datetime.now()
+                # print "Sended: ",distances, "time:", (t1-t0)
+                del msg
+                print "Distance sended!"
+            else:
+                print "There're not found distances. Check the posture :("
 
         def onStart(self):
             print "Starting behaviour RecvFromCameraAgent. . ."
@@ -52,12 +69,12 @@ class Coordinator(spade.Agent.Agent):
                 self.msg = self._receive(block=True)
                 print "Received from Camera Agent"
             except Exception:
+                self.msg = None
                 print "just pException"
 
             if self.msg is not None:
                 t0 = datetime.datetime.now()
-                # self.sendImgToPersonalIdentityAgent(self.msg.getContent())
-                # print "Content", hashlib.sha224(self.msg.getContent()).hexdigest()
+
                 # Decode from base64 string to opencv img creating the header
                 imgBin = base64.b64decode(self.msg.getContent())
                 if RGBimages:
@@ -68,42 +85,17 @@ class Coordinator(spade.Agent.Agent):
                 del imgBin
                 # Cast the opencv img to numpy array
                 npArray = numpy.asarray(originalImage[:, :])
-                try:
-                    cv2.imwrite("imageDeProva.png", npArray)
-                    url = 'http://localhost:5001/checkIdentity'
-                    files = {'file': open('imageDeProva.png', 'rb')}
-                    r = requests.post(url, files=files)
-                    print r.text
-                except Exception as e:
-                    print "Error request:", e
+                personId = self.sendImgToFaceRecognitionServer(npArray)['face_recognised']
+                print personId
                 del originalImage
                 # Obtain the distances from numpy array
                 distances = process_image_matrix(npArray)
                 del npArray
 
-                if distances is not None:
-                    # Distribute matrix to all classificators
-                    # Build the template message
-                    msg = spade.ACLMessage.ACLMessage()
-                    msg.setPerformative("inform")
-                    msg.setOntology("distances")
-                    # For each classificator agent send it the distances
-                    for agent in self.myAgent.classificators:
-                        print "Sending computed distances to %s" % str(agent)
-                        msg.addReceiver(agent)
-                        msg.setContent(distances)
-                        self.myAgent.send(msg)
-
-                    t1 = datetime.datetime.now()
-                    # print "Sended: ",distances, "time:", (t1-t0)
-                    del msg
-
-                    del distances
-                    print "Distance sended!"
-                else:
-                    print "There're not found distances. Check the posture :("
+                self.sendDistancesToEmotionRecognitionAgents(distances, personId)
 
                 del self.msg
+                del distances
             else:
                 print "No messages"
 
@@ -153,6 +145,7 @@ class Coordinator(spade.Agent.Agent):
                     msg.addReceiver(self.myAgent.clients[0])
                     msg.setContent(winner)
                     self.myAgent.send(msg)
+                    del msg
                     t1 = datetime.datetime.now()
                     print "Sended to Camera agent: %s" % winner
                     print "time:", (t1-t0)
