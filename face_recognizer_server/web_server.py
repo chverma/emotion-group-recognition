@@ -23,7 +23,7 @@ import numpy
 import json
 
 # Import config
-with open('config.json') as data_file:
+with open('../config.json') as data_file:
     localConfig = json.load(data_file)
 app = Flask(__name__)
 
@@ -34,19 +34,28 @@ class Queue:
         self.maxElem = maxElem
 
     def load(self):
-        self.facesList = numpy.load("initialFaces.npy")
-        self.namesList = numpy.load("initialNames.npy")
+        try:
+            self.facesList = numpy.load(localConfig['people']['face_encodings'])
+            self.namesList = numpy.load(localConfig['people']['face_names'])
+        except Exception:
+            self.facesList = []
+            self.namesList = []
 
     def save(self):
         npArray = numpy.asarray(self.facesList)
-        numpy.save("initialFaces.npy", npArray)
+        numpy.save(localConfig['people']['face_encodings'], npArray)
         npArray = numpy.asarray(self.namesList)
-        numpy.save("initialNames.npy", npArray)
+        numpy.save(localConfig['people']['face_names'], npArray)
 
     def append(self, elem, name):
-        if self.maxElem > len(self.namesList):
+        numElem = len(self.namesList)
+        if numElem == 0:
+            self.facesList = numpy.array(elem)
+            self.namesList = numpy.asarray([name])
+        elif self.maxElem > numElem:
+            print type(self.namesList), type(name)
             self.facesList = numpy.append(self.facesList, elem, axis=0)
-            self.namesList = numpy.append(self.namesList, name, axis=0)
+            self.namesList = numpy.append(self.namesList, [name], axis=0)
         else:
             self.facesList[:-1] = self.facesList[1:]
             print type(self.facesList[-1])
