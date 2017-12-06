@@ -53,6 +53,10 @@ models = [modelMLP]
 
 
 class Classificator(spade.Agent.Agent):
+    """
+        Agent Classificator receives distances as messages to classify these into
+        an emotion using a trained model.
+    """
     class RecvMsgBehav(spade.Behaviour.Behaviour):
         def onStart(self):
             print "Starting behaviour . . ."
