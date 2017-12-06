@@ -17,7 +17,7 @@
 # $ pip3 install flask
 
 import face_recognition
-from flask import Flask, jsonify, request, redirect
+from flask import Flask, jsonify, request, redirect, url_for
 import hashlib
 import numpy
 import json
@@ -118,13 +118,21 @@ def upload_image():
     # If no valid image file was uploaded, show the file upload form:
     return '''
     <!doctype html>
-    <title>Who are in that picture?</title>
-    <h1>Upload a picture and see who are in that picture!</h1>
-    <form method="POST" enctype="multipart/form-data">
-      <input type="file" name="file"><br>
-      <input type="text" name="name"><br>
-      <input type="submit" value="Upload">
-    </form>
+    <head>
+    <link rel="stylesheet" href="'''+url_for('static', filename='css/bootstrap.min.css')+'''">
+    </head>
+    <body>
+        <title>Who are in that picture?</title>
+        <h1>Upload a picture and see who are in that picture!</h1>
+        <form class="form-control" method="POST" enctype="multipart/form-data">
+          <input class="form-inline" type="file" name="file">
+          <div class="form-inline" >
+            <label>Name if will be saved: </label>
+            <input type="text" name="name">
+          </div>
+          <input class="btn btn-primary btn-lg form-inline" type="submit" value="Upload">
+        </form>
+    </body>
     '''
 
 
