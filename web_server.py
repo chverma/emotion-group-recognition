@@ -18,25 +18,63 @@
 
 import face_recognition
 from flask import Flask, jsonify, request, redirect
-
+import hashlib
+import numpy
+import pprint
+import json
+from pymongo import MongoClient
 # You can change this to any folder on your system
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-
+# Import config
+with open('config.json') as data_file:
+    localConfig = json.load(data_file)
 app = Flask(__name__)
 
-# Load a sample picture and learn how to recognize it.
-obama_image = face_recognition.load_image_file("/home/chverma/UPV/TFG/face_recognition/examples/obama.jpg")
-obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
 
-nata_image = face_recognition.load_image_file("/home/chverma/UPV/TFG/data/faces/chverma/neutral/web1461950635617.png")
-nata_face_encoding = face_recognition.face_encodings(nata_image)[0]
+class Queue:
+    def __init__(self, maxElem=5):
+        self.load()
+        self.maxElem = maxElem
 
-chris_image = face_recognition.load_image_file("/home/chverma/UPV/TFG/data/faces/chverma/neutral/x11.png")
-chris_face_encoding = face_recognition.face_encodings(chris_image)[0]
+    def load(self):
+        self.facesList = numpy.load("initialFaces.npy")
+        self.namesList = numpy.load("initialNames.npy")
 
-initialFaces = [obama_face_encoding, nata_face_encoding, chris_face_encoding]
-initialNames = ["Obama", "Nata", "Christian"]
-countUnknown = 0
+    def save(self):
+        npArray = numpy.asarray(self.facesList)
+        numpy.save("initialFaces.npy", npArray)
+        npArray = numpy.asarray(self.namesList)
+        numpy.save("initialNames.npy", npArray)
+
+    def append(self, elem, name):
+        if self.maxElem > len(self.namesList):
+            self.facesList = numpy.append(self.facesList, elem, axis=0)
+            self.namesList = numpy.append(self.namesList, name, axis=0)
+        else:
+            self.facesList[:-1] = self.facesList[1:]
+            print type(self.facesList[-1])
+            print type(elem)
+            self.facesList[-1] = numpy.asarray(elem)
+
+            self.namesList[:-1] = self.namesList[1:]
+            print type(self.namesList[-1]), self.namesList[-1]
+            print type(name), name
+            self.namesList[-1] = name
+
+    def getNames(self):
+        return self.namesList
+
+    def getFaces(self):
+        return self.facesList
+
+    def getLength(self):
+        return len(self.namesList)
+
+
+queue = Queue(localConfig['people']['max_number'])
+
+
+
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -45,6 +83,8 @@ def allowed_file(filename):
 
 @app.route('/checkIdentity', methods=['GET', 'POST'])
 def upload_image():
+
+    print "We have %d stored faces" % queue.getLength()
     # Check if a valid image file was uploaded
     if request.method == 'POST':
         if 'file' not in request.files:
@@ -57,7 +97,12 @@ def upload_image():
 
         if file and allowed_file(file.filename):
             # The image file seems valid! Detect faces and return the result.
-            return detect_faces_in_image(file)
+            if 'name' in request.args:
+                nameProvided = request.args['name']
+            else:
+                nameProvided = file.filename
+
+            return detect_faces_in_image(file, nameProvided)
 
     # If no valid image file was uploaded, show the file upload form:
     return '''
@@ -71,35 +116,10 @@ def upload_image():
     '''
 
 
-def detect_faces_in_image(file_stream):
-    # Pre-calculated face encoding of Obama generated with face_recognition.face_encodings(img)
-    known_face_encoding = [-0.09634063,  0.12095481, -0.00436332, -0.07643753,  0.0080383,
-                            0.01902981, -0.07184699, -0.09383309,  0.18518871, -0.09588896,
-                            0.23951106,  0.0986533 , -0.22114635, -0.1363683 ,  0.04405268,
-                            0.11574756, -0.19899382, -0.09597053, -0.11969153, -0.12277931,
-                            0.03416885, -0.00267565,  0.09203379,  0.04713435, -0.12731361,
-                           -0.35371891, -0.0503444 , -0.17841317, -0.00310897, -0.09844551,
-                           -0.06910533, -0.00503746, -0.18466514, -0.09851682,  0.02903969,
-                           -0.02174894,  0.02261871,  0.0032102 ,  0.20312519,  0.02999607,
-                           -0.11646006,  0.09432904,  0.02774341,  0.22102901,  0.26725179,
-                            0.06896867, -0.00490024, -0.09441824,  0.11115381, -0.22592428,
-                            0.06230862,  0.16559327,  0.06232892,  0.03458837,  0.09459756,
-                           -0.18777156,  0.00654241,  0.08582542, -0.13578284,  0.0150229 ,
-                            0.00670836, -0.08195844, -0.04346499,  0.03347827,  0.20310158,
-                            0.09987706, -0.12370517, -0.06683611,  0.12704916, -0.02160804,
-                            0.00984683,  0.00766284, -0.18980607, -0.19641446, -0.22800779,
-                            0.09010898,  0.39178532,  0.18818057, -0.20875394,  0.03097027,
-                           -0.21300618,  0.02532415,  0.07938635,  0.01000703, -0.07719778,
-                           -0.12651891, -0.04318593,  0.06219772,  0.09163868,  0.05039065,
-                           -0.04922386,  0.21839413, -0.02394437,  0.06173781,  0.0292527 ,
-                            0.06160797, -0.15553983, -0.02440624, -0.17509389, -0.0630486 ,
-                            0.01428208, -0.03637431,  0.03971229,  0.13983178, -0.23006812,
-                            0.04999552,  0.0108454 , -0.03970895,  0.02501768,  0.08157793,
-                           -0.03224047, -0.04502571,  0.0556995 , -0.24374914,  0.25514284,
-                            0.24795187,  0.04060191,  0.17597422,  0.07966681,  0.01920104,
-                           -0.01194376, -0.02300822, -0.17204897, -0.0596558 ,  0.05307484,
-                            0.07417042,  0.07126575,  0.00209804]
-
+def detect_faces_in_image(file_stream, nameProvided):
+    global queue
+    facesList = queue.getFaces()
+    namesList = queue.getNames()
     # Load the uploaded image file
     img = face_recognition.load_image_file(file_stream)
     # Get face encodings for any faces in the uploaded image
@@ -107,28 +127,117 @@ def detect_faces_in_image(file_stream):
 
     face_found = False
     names_found = []
+    face_recognised = False
     for unkown_face in unknown_face_encodings:
-        match = face_recognition.compare_faces([obama_face_encoding, nata_face_encoding, chris_face_encoding], unkown_face)
-
+        match = face_recognition.compare_faces(facesList, unkown_face)
         name = "-1"
 
         for i in range(len(match)):
             face_found = True
             if match[i]:
-                name = initialNames[i]
+                name = namesList[i]
+                face_recognised = name
 
         if name == "-1":
-            name = "Unknown %d"%(countUnknown)
-            initialFaces.append(face_encoding)
-            initialNames.append(name)
-            countUnknown += 1
+            name = nameProvided
+            queue.append([unkown_face], name)
+
         names_found.append(name)
     # Return the result as json
     result = {
         "face_found_in_image": face_found,
-        "names": names_found
+        "names": names_found,
+        "face_recognised": face_recognised
     }
     return jsonify(result)
+
+
+@app.route('/save', methods=['GET'])
+def save_model():
+    queue.save()
+    # If no valid image file was uploaded, show the file upload form:
+    return '''
+    <!doctype html>
+    <title>Save model</title>
+    <h1>Model saved</h1>
+    '''
+
+def getData():
+    global queue
+    if queue is None:
+        try:
+            initialFaces = numpy.load("initialFaces.npy")  # [localConfig['people']['max_number']]
+            initialNames = numpy.load("initialNames.npy")  # [localConfig['people']['max_number']]
+
+        except Exception as e:
+            print e
+            # Load a sample picture and learn how to recognize it.
+            obama_image = face_recognition.load_image_file("/home/chverma/UPV/TFG/face_recognition/examples/obama.jpg")
+            obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
+
+            nata_image = face_recognition.load_image_file("/home/chverma/UPV/TFG/data/faces/chverma/neutral/web1461950635617.png")
+            nata_face_encoding = face_recognition.face_encodings(nata_image)[0]
+
+            chris_image = face_recognition.load_image_file("/home/chverma/UPV/TFG/data/faces/chverma/neutral/x11.png")
+            chris_face_encoding = face_recognition.face_encodings(chris_image)[0]
+
+            initialFaces = [obama_face_encoding, nata_face_encoding, chris_face_encoding]
+            initialNames = ["Obama", "Nata", "Christian"]
+
+def getDataMongo(query=None):
+    client = MongoClient('localhost', 27017)
+    db = client.test_database
+    posts = db.posts
+    if query is None:
+        return posts.find()
+    else:
+        return posts.find(query)
+
+
+def insertData(personName, npArray=[]):
+    client = MongoClient('localhost', 27017)
+    db = client.test_database
+    collection = db.test_collection
+    if personName is None or personName == '':
+        return False
+    import datetime
+    post = {"name": personName,
+            "face_encoding": npArray,
+            "insertedAt": datetime.datetime.utcnow()
+            }
+    posts = db.posts
+    post_id = posts.insert_one(post).inserted_id
+    return True
+
+
+@app.route('/checkMongo', methods=['GET', 'POST'])
+def check_mongo():
+    # Check if a valid image file was uploaded
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            return redirect(request.url)
+
+        file = request.files['file']
+
+        if file.filename == '':
+            return redirect(request.url)
+
+        if file and allowed_file(file.filename):
+            # The image file seems valid! Detect faces and return the result.
+            if 'name' in request.args:
+                nameProvided = request.args['name']
+            else:
+                nameProvided = file.filename
+
+            return detect_faces_in_image(file, nameProvided)
+
+    print getData()[:]
+    # If no valid image file was uploaded, show the file upload form:
+    return '''
+    <!doctype html>
+    <title>Mongo check</title>
+    <h1>Mongo check ok!</h1>
+    ''' + str(getData()[:])
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5001, debug=True)
