@@ -20,11 +20,8 @@ import face_recognition
 from flask import Flask, jsonify, request, redirect
 import hashlib
 import numpy
-import pprint
 import json
-from pymongo import MongoClient
-# You can change this to any folder on your system
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
 # Import config
 with open('config.json') as data_file:
     localConfig = json.load(data_file)
@@ -76,7 +73,7 @@ queue = Queue(localConfig['people']['max_number'])
 
 def allowed_file(filename):
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+           filename.rsplit('.', 1)[1].lower() in localConfig['images']['allowed_ext']
 
 
 @app.route('/checkIdentity', methods=['GET', 'POST'])
@@ -101,14 +98,22 @@ def upload_image():
                 nameProvided = file.filename
 
             return detect_faces_in_image(file, nameProvided)
+        else:
+            # Return the result as json
+            result = {
+                "error": True,
+                "msg": "Not valid extension"
+            }
+            return jsonify(result)
 
     # If no valid image file was uploaded, show the file upload form:
     return '''
     <!doctype html>
-    <title>Wfo are in that picture?</title>
+    <title>Who are in that picture?</title>
     <h1>Upload a picture and see who are in that picture!</h1>
     <form method="POST" enctype="multipart/form-data">
-      <input type="file" name="file">
+      <input type="file" name="file"><br>
+      <input type="text" name="name"><br>
       <input type="submit" value="Upload">
     </form>
     '''
@@ -158,61 +163,6 @@ def save_model():
     <!doctype html>
     <title>Save model</title>
     <h1>Model saved</h1>
-    '''
-
-
-def getDataMongo(query=None):
-    client = MongoClient('localhost', 27017)
-    db = client.test_database
-    posts = db.posts
-    if query is None:
-        return posts.find()
-    else:
-        return posts.find(query)
-
-
-def insertData(personName, npArray=[]):
-    client = MongoClient('localhost', 27017)
-    db = client.test_database
-    collection = db.test_collection
-    if personName is None or personName == '':
-        return False
-    import datetime
-    post = {"name": personName,
-            "face_encoding": npArray,
-            "insertedAt": datetime.datetime.utcnow()
-            }
-    posts = db.posts
-    post_id = posts.insert_one(post).inserted_id
-    return True
-
-
-@app.route('/checkMongo', methods=['GET', 'POST'])
-def check_mongo():
-    # Check if a valid image file was uploaded
-    if request.method == 'POST':
-        if 'file' not in request.files:
-            return redirect(request.url)
-
-        file = request.files['file']
-
-        if file.filename == '':
-            return redirect(request.url)
-
-        if file and allowed_file(file.filename):
-            # The image file seems valid! Detect faces and return the result.
-            if 'name' in request.args:
-                nameProvided = request.args['name']
-            else:
-                nameProvided = file.filename
-
-            return detect_faces_in_image(file, nameProvided)
-
-    # If no valid image file was uploaded, show the file upload form:
-    return '''
-    <!doctype html>
-    <title>Mongo check</title>
-    <h1>Mongo check ok!</h1>
     '''
 
 
