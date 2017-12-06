@@ -10,3 +10,5 @@ models/SVM/*
 trash/*
 config.json
 models/*
+mongobd/*
+backup/*
