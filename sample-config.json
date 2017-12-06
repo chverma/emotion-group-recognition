@@ -1,0 +1,17 @@
+{
+    "readme": {
+      "please, rename me to config.json"
+    },
+    "spade": {
+      "description": "IP address of spade server",
+      "ip_address": "192.168.0.2"
+    },
+    "images": {
+      "description": "Image settings",
+      "RGB": true
+    },
+    "people": {
+      "description": "People settings",
+      "max_number": 20
+    }
+}
