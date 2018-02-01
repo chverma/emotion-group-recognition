@@ -9,7 +9,6 @@ import numpy
 import webModel
 import cv2
 import time
-import Image
 from loaddata.processImage import process_image_matrix as process_image_matrix
 import cv
 from collections import defaultdict

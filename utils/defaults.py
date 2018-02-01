@@ -1,8 +1,10 @@
+import os
 '''DEFAULTS'''
 dim = 2278  # because I use 12 distances
 dataset = 'UNION'  # JAFFE, KDEF, UNION [is not Union is my dataset], CAFE
-data_path = '/home/chverma/UPV/TFG/data/'
-root_dir = '/home/chverma/UPV/TFG/pythonDlibLendmark/'
+data_path = '<no_path>'
+root_dir = os.path.join(os.path.abspath('.'), "")
+
 emotions = ["happy", "neutral", "disgust", "fear", "surprised", "sad", "angry"]
 CLASS_N = 7  # At the moment 7 classes
 
