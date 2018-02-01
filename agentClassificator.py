@@ -12,7 +12,6 @@ import importlib
 import webModel
 import cv2
 import time
-import Image
 from loaddata.LoadAndShuffleData import LoadAndShuffleData as loadData
 import utils.defaults as defaults
 import cv
@@ -23,7 +22,7 @@ with open('config.json') as data_file:
     localConfig = json.load(data_file)
 
 # Define the IP server that contains a running spade instance to connect it as an agent
-spadeServerIP = localConfig['spade']['ip_address']
+spadeServerIP = sys.argv[1]  # localConfig['spade']['ip_address']
 
 samples_train, labels_train, samples_test, labels_test = loadData().shuffleData(
     numpy.load(defaults.file_dataset),

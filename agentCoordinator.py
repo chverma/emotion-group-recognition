@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 import sys
 import time
@@ -17,12 +17,14 @@ import json
 import hashlib
 import requests
 import traceback
+
 # Import config
 with open('config.json') as data_file:
     localConfig = json.load(data_file)
 
 # Define the IP server that contains a running spade instance to connect it as an agent
-spadeServerIP = localConfig['spade']['ip_address']
+spadeServerIP = sys.argv[1]  # localConfig['spade']['ip_address']
+
 RGBimages = localConfig['images']['RGB']
 
 
@@ -240,12 +242,14 @@ class Coordinator(spade.Agent.Agent):
 
 
 def main():
-    a = Coordinator("coordinator@"+spadeServerIP, "secret")
+    coordinatorId = "coordinator@{}".format(spadeServerIP)
+
+    a = Coordinator(coordinatorId, "secret")
+
     a.classificators = []
     a.identity = []
     a.clients = []
     a.start()
-
     alive = True
     while alive:
         try:
