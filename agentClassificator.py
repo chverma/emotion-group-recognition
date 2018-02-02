@@ -119,7 +119,7 @@ class Classificator(spade.Agent.Agent):
             msg = spade.ACLMessage.ACLMessage()
             msg.setPerformative("inform")
             msg.setOntology("login")
-            msg.addReceiver(spade.AID.aid("coordinator@"+spadeServerIP, ["xmpp://coordinator@"+spadeServerIP]))
+            msg.addReceiver(spade.AID.aid("coordinator@{}".format(spadeServerIP), ["xmpp://coordinator@{}".format(spadeServerIP)]))
             msg.setContent('classificator')
             self.myAgent.send(msg)
             # print "Sended login!"
@@ -139,7 +139,7 @@ def main():
     modelAgents = []
 
     for n in range(len(models)):
-        agent = "classificator"+str(n)+"@"+spadeServerIP
+        agent = "classificator{}@{}".format(str(n), spadeServerIP)
         classificator = Classificator(agent, "secret")
         classificator.model = models[n]
         modelAgents.append(classificator)
