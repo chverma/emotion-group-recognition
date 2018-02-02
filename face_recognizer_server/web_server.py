@@ -49,6 +49,7 @@ class Queue:
         except Exception:
             self.facesList = []
             self.namesList = []
+            self.emotionList = []
 
     def save(self):
         npArray = numpy.asarray(self.facesList)
