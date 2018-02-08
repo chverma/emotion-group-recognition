@@ -18,7 +18,7 @@ import hashlib
 import requests
 import traceback
 import logging
-logging.basicConfig(filename='agentSender.log', level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 # Import config
 with open('config.json') as data_file:
     localConfig = json.load(data_file)
@@ -33,10 +33,12 @@ class Coordinator(spade.Agent.Agent):
     class RecvFromCameraAgent(spade.Behaviour.Behaviour):
         def sendImgToFaceRecognitionServer(self, npArray):
             try:
-                cv2.imwrite(localConfig['face_recognizer_server']['tmp_dir'], npArray)
+                cv2.imwrite(localConfig['images']['coordinator_tmp_file'], npArray)
+
                 url = localConfig['face_recognizer_server']['put_image_url']
-                files = {'file': open(localConfig['people']['tmp_dir'], 'rb')}
+                files = {'file': open(localConfig['images']['coordinator_tmp_file'], 'rb')}
                 r = requests.post(url, files=files)
+
                 return json.loads(r.text)
             except Exception as e:
                 logging.info("Error request: {}".format(e))
@@ -59,11 +61,14 @@ class Coordinator(spade.Agent.Agent):
                     self.myAgent.send(msg)
 
                 t1 = datetime.datetime.now()
-                # print "Sended: ",distances, "time:", (t1-t0)
+                # logging.info("Sended: ",distances, "time:", (t1-t0)
                 del msg
                 logging.info("Distance sended!")
+                return True
             else:
                 logging.info("There're not found distances. Check the posture :(")
+                return False
+
 
         def onStart(self):
             logging.info("Starting behaviour RecvFromCameraAgent. . .")
@@ -72,10 +77,10 @@ class Coordinator(spade.Agent.Agent):
             self.msg = None
             try:
                 self.msg = self._receive(block=True)
-                logging.info("Received from Camera Agent")
-            except Exception:
+
+            except Exception as e:
                 self.msg = None
-                logging.info("just pException")
+                logging.info("just pException {}".format(str(e)))
 
             if self.msg is not None:
                 t0 = datetime.datetime.now()
@@ -83,21 +88,32 @@ class Coordinator(spade.Agent.Agent):
                 # Decode from base64 string to opencv img creating the header
                 imgBin = base64.b64decode(self.msg.getContent())
                 if RGBimages:
+
                     originalImage = cv.CreateImageHeader((640, 480), cv.IPL_DEPTH_8U, 3)
                 else:
+
                     originalImage = cv.CreateImageHeader((640, 480), cv.IPL_DEPTH_8U, 1)
                 cv.SetData(originalImage, imgBin)
+
                 del imgBin
                 # Cast the opencv img to numpy array
+                logging.info("{}".format(originalImage[:, :]))
                 npArray = numpy.asarray(originalImage[:, :])
                 personId = self.sendImgToFaceRecognitionServer(npArray)['face_recognised']
-                print personId
+                logging.info("personId: {}".format(personId))
                 del originalImage
                 # Obtain the distances from numpy array
                 distances = process_image_matrix(npArray)
                 del npArray
-
-                self.sendDistancesToEmotionRecognitionAgents(distances, personId)
+                if distances is not None:
+                    self.sendDistancesToEmotionRecognitionAgents(distances, personId)
+                else:
+                    logging.info('no faces, send no faces found')
+                    replyMsg = self.msg.createReply()
+                    logging.info('no faces, send no faces found2')
+                    replyMsg.setOntology('emotion')
+                    replyMsg.setContent('Face not found')
+                    self.myAgent.send(replyMsg)
 
                 del self.msg
                 del distances
@@ -109,7 +125,7 @@ class Coordinator(spade.Agent.Agent):
         def onStart(self):
             logging.info("Starting behaviour RecvFromModels. . .")
             # Defines how many responses take it to perform a response
-            self.maxResponses = 2
+            self.maxResponses = 1
             # Defines the number of current responses in that round
             self.nResponses = 0
             self.currentResponses = []
@@ -133,19 +149,23 @@ class Coordinator(spade.Agent.Agent):
                 try:
                     content = self.msg.getContent()
                     personId = self.msg.getPerformative()
-                    print content
+                    logging.info(content)
                     resp = json.loads(content)
                     logging.info("----------- {}".format(resp['emotion']))
                     self.currentResponses.append(resp['emotion'])
+                    self.nResponses += 1
 
                     # When it has all the results or timeout, send results to Camera agent
-                    if self.nResponses > self.maxResponses:
+                    if self.nResponses >= self.maxResponses:
+                        logging.info("evaluating winner")
                         d = defaultdict(int)
+                        logging.info(self.currentResponses)
                         for word in self.currentResponses:
                             d[word] += 1
-
+                        logging.info("evaluating winner2")
                         maxVal = -1
-                        winner = -1
+                        winner = "Not found"
+                        logging.info("evaluating winner3")
                         for k in d.keys():
                             if d[k] > maxVal:
                                 maxVal = d[k]
@@ -158,7 +178,9 @@ class Coordinator(spade.Agent.Agent):
                         msg = spade.ACLMessage.ACLMessage()
                         msg.setPerformative("inform")
                         msg.setOntology("emotion")
-                        msg.addReceiver(self.myAgent.clients[0])
+                        logging.info(self.myAgent.clients)
+                        s, _ = self.myAgent.clients[0]
+                        msg.addReceiver(s)
                         msg.setContent(winner)
                         self.myAgent.send(msg)
                         del msg
@@ -168,10 +190,10 @@ class Coordinator(spade.Agent.Agent):
                         self.nResponses = 0
                         self.currentResponses = []
                     else:
-                        self.nResponses = self.nResponses+1
+                        logging.info("not evaluating winner yet")
                 except Exception as e:
-                    logging.info("Bad emotion")
-                    logging.info(traceback.format_exc())
+                    logging.info("Exception")
+                    logging.info(str(e))
             else:
                 logging.info("No messages")
 
@@ -187,18 +209,23 @@ class Coordinator(spade.Agent.Agent):
                 logging.info("just pException")
 
             if self.msg:
-                s = self.msg.getSender()
-
-                if (self.msg.getContent() == 'classificator'):
-                    if s not in self.myAgent.classificators:
-                        self.myAgent.classificators.append(s)
+                try:
+                    s = self.msg.getSender()
+                    jsonMsg = json.loads(self.msg.getContent())
+                    if (jsonMsg['type'] == 'classificator'):
+                        if s not in self.myAgent.classificators:
+                            self.myAgent.classificators.append(s)
+                            logging.info('%s has logged in' % (s.getName()))
+                    elif (jsonMsg['type'] == 'identity'):
+                        self.myAgent.identity.append(s)
                         logging.info('%s has logged in' % (s.getName()))
-                elif (self.msg.getContent() == 'identity'):
-                    self.myAgent.identity.append(s)
-                    logging.info('%s has logged in' % (s.getName()))
-                elif (self.msg.getContent() == 'clients'):
-                    self.myAgent.clients.append(s)
-                    logging.info('%s has logged in' % (s.getName()))
+                    elif (jsonMsg['type'] == 'client'):
+                        self.myAgent.clients.append((s, jsonMsg['color_shape']))
+                        logging.info('%s has logged in' % (s.getName()))
+                    else:
+                        logging.info('LOGIN ERROR: bad type: %s' % (s.getName()))
+                except Exception as e:
+                    logging.error("Login: {}".format(str(e)))
             else:
                 logging.info("No messages")
 

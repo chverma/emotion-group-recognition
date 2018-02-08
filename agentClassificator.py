@@ -17,12 +17,15 @@ import utils.defaults as defaults
 import cv
 import sys
 import json
+import logging
+logging.basicConfig(level=logging.DEBUG)
 # Import config
 with open('config.json') as data_file:
     localConfig = json.load(data_file)
 
 # Define the IP server that contains a running spade instance to connect it as an agent
 spadeServerIP = sys.argv[1]  # localConfig['spade']['ip_address']
+logging.info("spade_server_python: %s" % spadeServerIP)
 
 samples_train, labels_train, samples_test, labels_test = loadData().shuffleData(
     numpy.load(defaults.file_dataset),
@@ -31,7 +34,7 @@ samples_train, labels_train, samples_test, labels_test = loadData().shuffleData(
 
 samples_train = numpy.vstack((samples_train, samples_test))
 labels_train = numpy.hstack((labels_train, labels_test))
-print "Training models with %d features" % (len(samples_train))
+logging.info("Training models with %d features" % (len(samples_train)))
 # Model definition and training
 # SVMModels
 # modelSVM_SVC = webModel.webModel('svm_svc', samples_train, labels_train)
@@ -45,7 +48,7 @@ modelKNN = webModel.webModel('knn', samples_train, labels_train)
 
 # RTREES model
 # modelRTrees = webModel.webModel('rtrees',samples_train, labels_train)
-print "Trained models"
+logging.info("Trained models")
 # Put the trained model in that list in order to create an agent for each model
 # models = [modelSVM_SVC, modelSVM_NU_SVC, modelMLP, modelKNN, modelRTrees]
 # models = [modelMLP]
@@ -63,12 +66,12 @@ class Classificator(spade.Agent.Agent):
 
         def _process(self):
             # Wait for messages
-            print "Waiting messages ..."
+            logging.info("Waiting messages ...")
             self.msg = None
             try:
                 self.msg = self._receive(block=True)
             except Exception:
-                print "just pException"
+                logging.info("just pException")
 
             if self.msg:
                 t0 = datetime.datetime.now()
@@ -85,8 +88,8 @@ class Classificator(spade.Agent.Agent):
 
                     personId = self.msg.getPerformative()
 
-                except Exception:
-                    print "just pException2"
+                except Exception as e:
+                    logging.info("just pException2 {}".format(str(e)))
                 # Cast string to numpy array. It defines the distances computed by Coordinator agent.
                 distances = numpy.fromstring(content, dtype=numpy.float32, sep=',')
                 # Build the reply to the Coordinator
@@ -104,9 +107,9 @@ class Classificator(spade.Agent.Agent):
                 rep.setContent(msg)
                 self.myAgent.send(rep)
                 t1 = datetime.datetime.now()
-                print "Sended: %s in  %d microseconds" % (msg, (t1-t0).microseconds)
+                logging.info("Sended: %s in  %d microseconds" % (msg, (t1-t0).microseconds))
             else:
-                print "No messages"
+                logging.info("No messages")
 
     class SendLoginBehav(spade.Behaviour.PeriodicBehaviour):
         """
@@ -114,15 +117,19 @@ class Classificator(spade.Agent.Agent):
         """
 
         def _onTick(self):
-            # print "Send login . . ."
+            # logging.info("Send login . . .")
             # Request login to coordinator agent onStart event
             msg = spade.ACLMessage.ACLMessage()
             msg.setPerformative("inform")
             msg.setOntology("login")
             msg.addReceiver(spade.AID.aid("coordinator@{}".format(spadeServerIP), ["xmpp://coordinator@{}".format(spadeServerIP)]))
-            msg.setContent('classificator')
+            jsonMsg = {
+                'type': 'classificator',
+                'color_shape': False
+            }
+            msg.setContent(json.dumps(jsonMsg))
             self.myAgent.send(msg)
-            # print "Sended login!"
+            # logging.info("Sended login!"
 
     def _setup(self):
         # Create the template for the EventBehaviour: a message from myself
@@ -144,7 +151,7 @@ def main():
         classificator.model = models[n]
         modelAgents.append(classificator)
         classificator.start()
-        print "Launched classificator "+str(n)
+        logging.info("Launched classificator "+str(n))
 
     alive = True
     while alive:
