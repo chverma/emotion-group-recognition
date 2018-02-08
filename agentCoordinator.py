@@ -17,14 +17,15 @@ import json
 import hashlib
 import requests
 import traceback
-
+import logging
+logging.basicConfig(filename='agentSender.log', level=logging.DEBUG)
 # Import config
 with open('config.json') as data_file:
     localConfig = json.load(data_file)
 
 # Define the IP server that contains a running spade instance to connect it as an agent
 spadeServerIP = sys.argv[1]  # localConfig['spade']['ip_address']
-
+logging.info("spadeServerIP: {}".format(spadeServerIP))
 RGBimages = localConfig['images']['RGB']
 
 
@@ -32,13 +33,13 @@ class Coordinator(spade.Agent.Agent):
     class RecvFromCameraAgent(spade.Behaviour.Behaviour):
         def sendImgToFaceRecognitionServer(self, npArray):
             try:
-                cv2.imwrite(localConfig['tmp']['face_to_recognizer'], npArray)
-                url = localConfig['face_recognizer_server']['url']
-                files = {'file': open(localConfig['tmp']['face_to_recognizer'], 'rb')}
+                cv2.imwrite(localConfig['face_recognizer_server']['tmp_dir'], npArray)
+                url = localConfig['face_recognizer_server']['put_image_url']
+                files = {'file': open(localConfig['people']['tmp_dir'], 'rb')}
                 r = requests.post(url, files=files)
                 return json.loads(r.text)
             except Exception as e:
-                print "Error request:", e
+                logging.info("Error request: {}".format(e))
 
         def sendDistancesToEmotionRecognitionAgents(self, distances, personId):
             if distances is not None:
@@ -51,30 +52,30 @@ class Coordinator(spade.Agent.Agent):
                 msg.setOntology("distances")
                 # For each classificator agent send it the distances
                 for agent in self.myAgent.classificators:
-                    print "Sending computed distances of %s to %s" % (personId, agent.getName())
+                    logging.info("Sending computed distances of %s to %s" % (personId, agent.getName()))
                     msg.addReceiver(agent)
-                    print personId
+                    logging.info(personId)
                     msg.setContent(distances)
                     self.myAgent.send(msg)
 
                 t1 = datetime.datetime.now()
                 # print "Sended: ",distances, "time:", (t1-t0)
                 del msg
-                print "Distance sended!"
+                logging.info("Distance sended!")
             else:
-                print "There're not found distances. Check the posture :("
+                logging.info("There're not found distances. Check the posture :(")
 
         def onStart(self):
-            print "Starting behaviour RecvFromCameraAgent. . ."
+            logging.info("Starting behaviour RecvFromCameraAgent. . .")
 
         def _process(self):
             self.msg = None
             try:
                 self.msg = self._receive(block=True)
-                print "Received from Camera Agent"
+                logging.info("Received from Camera Agent")
             except Exception:
                 self.msg = None
-                print "just pException"
+                logging.info("just pException")
 
             if self.msg is not None:
                 t0 = datetime.datetime.now()
@@ -101,12 +102,12 @@ class Coordinator(spade.Agent.Agent):
                 del self.msg
                 del distances
             else:
-                print "No messages"
+                logging.info("No messages")
 
     '''Defines the behaviour to interact with Classificator agents'''
     class RecvClassificators(spade.Behaviour.Behaviour):
         def onStart(self):
-            print "Starting behaviour RecvFromModels. . ."
+            logging.info("Starting behaviour RecvFromModels. . .")
             # Defines how many responses take it to perform a response
             self.maxResponses = 2
             # Defines the number of current responses in that round
@@ -114,27 +115,27 @@ class Coordinator(spade.Agent.Agent):
             self.currentResponses = []
 
         def sendEmotionToFaceRecognitionServer(self, personId, emotion):
-            url = localConfig['face_recognizer_server']['emotion']
-            print "sending ", emotion, personId
+            url = localConfig['face_recognizer_server']['set_emotion_url']
+            logging.info("sending {} to {}".format(emotion, personId))
             r = requests.post(url, params={'name': personId, 'emotion': emotion})
 
         def _process(self):
             self.msg = None
             try:
                 self.msg = self._receive(block=True)
-                print "Received from Classificator"
+                logging.info("Received from Classificator")
             except Exception:
-                print "just pException"
+                logging.info("just pException")
 
             if self.msg:
-                print "RECEIVED FROM CLASSI"
+                logging.info("RECEIVED FROM CLASSI")
                 t0 = datetime.datetime.now()
                 try:
                     content = self.msg.getContent()
                     personId = self.msg.getPerformative()
                     print content
                     resp = json.loads(content)
-                    print "-----------", resp['emotion']
+                    logging.info("----------- {}".format(resp['emotion']))
                     self.currentResponses.append(resp['emotion'])
 
                     # When it has all the results or timeout, send results to Camera agent
@@ -150,7 +151,7 @@ class Coordinator(spade.Agent.Agent):
                                 maxVal = d[k]
                                 winner = k
 
-                        print "Emotion winner: %s" % winner
+                        logging.info("Emotion winner: %s" % winner)
 
                         self.sendEmotionToFaceRecognitionServer(personId, winner)
                         # Build and send the emotion response to the source, the camera agent
@@ -162,28 +163,28 @@ class Coordinator(spade.Agent.Agent):
                         self.myAgent.send(msg)
                         del msg
                         t1 = datetime.datetime.now()
-                        print "Sended to Camera agent: %s" % winner
-                        print "time:", (t1-t0)
+                        logging.info("Sended to Camera agent: %s" % winner)
+                        logging.info("time: {}".format(t1-t0))
                         self.nResponses = 0
                         self.currentResponses = []
                     else:
                         self.nResponses = self.nResponses+1
                 except Exception as e:
-                    print "Bad emotion"
-                    print(traceback.format_exc())
+                    logging.info("Bad emotion")
+                    logging.info(traceback.format_exc())
             else:
-                print "No messages"
+                logging.info("No messages")
 
     class RecvLogin(spade.Behaviour.Behaviour):
         def onStart(self):
-            print "Starting behaviour RecvLogin. . ."
+            logging.info("Starting behaviour RecvLogin. . .")
 
         def _process(self):
             self.msg = None
             try:
                 self.msg = self._receive(block=True)
             except Exception:
-                print "just pException"
+                logging.info("just pException")
 
             if self.msg:
                 s = self.msg.getSender()
@@ -191,36 +192,36 @@ class Coordinator(spade.Agent.Agent):
                 if (self.msg.getContent() == 'classificator'):
                     if s not in self.myAgent.classificators:
                         self.myAgent.classificators.append(s)
-                        print '%s has logged in' % (s.getName())
+                        logging.info('%s has logged in' % (s.getName()))
                 elif (self.msg.getContent() == 'identity'):
                     self.myAgent.identity.append(s)
-                    print '%s has logged in' % (s.getName())
+                    logging.info('%s has logged in' % (s.getName()))
                 elif (self.msg.getContent() == 'clients'):
                     self.myAgent.clients.append(s)
-                    print '%s has logged in' % (s.getName())
+                    logging.info('%s has logged in' % (s.getName()))
             else:
-                print "No messages"
+                logging.info("No messages")
 
     '''Defines the behaviour to interact with PersonalIdentity agents'''
     class RecvPersonalIdentity(spade.Behaviour.Behaviour):
         def onStart(self):
-            print "Starting behaviour RecvPersonalIdentity. . ."
+            logging.info("Starting behaviour RecvPersonalIdentity. . .")
 
         def _process(self):
             self.msg = None
             try:
                 self.msg = self._receive(block=True)
-                print "Received from PersonalIdentity"
+                logging.info("Received from PersonalIdentity")
             except Exception:
-                print "just pException"
+                logging.info("just pException")
 
             if self.msg:
                 t0 = datetime.datetime.now()
 
                 resp = self.msg.getContent()
-                print "Identity is: %s" % resp
+                logging.info("Identity is: %s" % resp)
             else:
-                print "No messages"
+                logging.info("No messages")
 
     def _setup(self):
         # Create the template for the EventBehaviour: a message from myself
