@@ -123,6 +123,7 @@ def adaptName(name, maxLen=9):
     return name
 
 
+@app.route('/')
 @app.route('/checkIdentity', methods=['GET', 'POST'])
 def upload_image():
 
@@ -175,7 +176,7 @@ def upload_image():
             </tr>
         </table>
 
-        <form class="form-control" method="POST" enctype="multipart/form-data">
+        <form class="form-control" method="POST" enctype="multipart/form-data" action='checkIdentity'>
           <input class="form-inline" type="file" name="file">
           <div class="form-inline" >
             <label>Name if will be saved: </label>
