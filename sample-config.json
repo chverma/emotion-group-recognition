@@ -19,5 +19,19 @@
       "tmp_dir": "tmp",
       "set_emotion_url": "web_server:5001/emotion",
       "put_image_url": "web_server:5001/checkIdentity"
+    },
+    "emotion-group-recognition": {
+      "emotions": {
+        "values": {},
+        "PAD": {
+          "angry": [-1, 1, 1],
+          "neutral": [0, 0, 0],
+          "happy": [1, 1, 1],
+          "fear": [-1, 1, -1],
+          "surprise": [1, 1, -1],
+          "sad": [0.02, 0.91, -0.5],
+          "disgust": [-0.66, -0.5, -0.09]
+        }
+      }
     }
 }

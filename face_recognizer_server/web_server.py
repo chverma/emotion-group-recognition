@@ -199,7 +199,8 @@ def detect_faces_in_image(file_stream, nameProvided):
 
     face_found = False
     names_found = []
-    face_recognised = False
+    face_recognised = []
+    nFaces = 0
     for unkown_face in unknown_face_encodings:
         match = face_recognition.compare_faces(facesList, unkown_face)
         name = "-1"
@@ -208,11 +209,16 @@ def detect_faces_in_image(file_stream, nameProvided):
             face_found = True
             if match[i]:
                 name = namesList[i]
-                face_recognised = name
+                face_recognised.append(name)
 
         if name == "-1":
             name = nameProvided
-            queue.append([unkown_face], name)
+            if name not in queue.getNames():
+                queue.append([unkown_face], name)
+            else:
+                name = '{}{}'.format(name, nFaces)
+                queue.append([unkown_face], name)
+                nFaces += 1
 
         names_found.append(name)
     # Return the result as json
@@ -261,6 +267,16 @@ def save_emotion():
     print "set emotion",  name, emotion
     queue.setEmotion(name.lower(), emotion)
     return name + ' ' + emotion
+
+
+@app.route('/group-model', methods=['GET', 'POST'])
+def group_model():
+    # Return the result as json
+    result = {
+        "nsamples": queue.getLength(),
+        "data": [],
+    }
+    return jsonify(result)
 
 
 if __name__ == "__main__":

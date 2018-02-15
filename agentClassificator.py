@@ -122,7 +122,8 @@ class Classificator(spade.Agent.Agent):
             msg = spade.ACLMessage.ACLMessage()
             msg.setPerformative("inform")
             msg.setOntology("login")
-            msg.addReceiver(spade.AID.aid("coordinator@{}".format(spadeServerIP), ["xmpp://coordinator@{}".format(spadeServerIP)]))
+            identifier = "coordinator@{}".format(spadeServerIP)
+            msg.addReceiver(spade.AID.aid(identifier, ["xmpp://{}".format(identifier)]))
             jsonMsg = {
                 'type': 'classificator',
                 'color_shape': False
