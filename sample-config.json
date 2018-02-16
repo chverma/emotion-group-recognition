@@ -15,10 +15,10 @@
       "face_names": "face_names.npy"
     },
     "face_recognizer_server": {
-      "url": "web_server",
+      "url": "face_recognizer",
       "tmp_dir": "tmp",
-      "set_emotion_url": "web_server:5001/emotion",
-      "put_image_url": "web_server:5001/checkIdentity"
+      "set_emotion_url": "face_recognizer:5001/emotion",
+      "put_image_url": "face_recognizer:5001/checkIdentity"
     },
     "emotion-group-recognition": {
       "emotions": {
