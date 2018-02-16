@@ -6,7 +6,8 @@
     "images": {
       "description": "Image settings",
       "RGB": true,
-      "allowed_ext": ["png", "jpg", "jpeg"]
+      "allowed_ext": ["png", "jpg", "jpeg"],
+      "coordinator_tmp_file": "/egr/tmp/temp.png"
     },
     "people": {
       "description": "People settings",
@@ -15,10 +16,10 @@
       "face_names": "face_names.npy"
     },
     "face_recognizer_server": {
-      "url": "face_recognizer",
+      "url": "http://face_recognizer",
       "tmp_dir": "tmp",
-      "set_emotion_url": "face_recognizer:5001/emotion",
-      "put_image_url": "face_recognizer:5001/checkIdentity"
+      "set_emotion_url": "http://face_recognizer:5001/emotion",
+      "put_image_url": "http://face_recognizer:5001/checkIdentity"
     },
     "emotion-group-recognition": {
       "emotions": {
